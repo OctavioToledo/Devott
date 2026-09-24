@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: devott-api
+
+server:
+  port: ${SERVER_PORT:8080}
+
+devott:
+  api:
+    version: v1
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  paths-to-match: /api/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
