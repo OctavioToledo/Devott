@@ -1,0 +1,15 @@
+# Archivos locales que no van al repo
+CLAUDE.md
+devott_modelo_datos_mvp_v2.html
+
+# Secretos
+.env
+.env.*
+!.env.example
+
+# IDEs y sistema
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
