@@ -45,7 +45,16 @@ public class ManejadorErrores extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ConflictoException.class)
     ProblemDetail conflicto(ConflictoException ex) {
-        return problema(HttpStatus.CONFLICT, ex.getMessage());
+        ProblemDetail problema = problema(HttpStatus.CONFLICT, ex.getMessage());
+        if (ex.getCampo() != null) {
+            problema.setProperty("errores", List.of(new ErrorDeCampo(ex.getCampo(), ex.getMessage())));
+        }
+        return problema;
+    }
+
+    @ExceptionHandler(DatosInvalidosException.class)
+    ProblemDetail datosInvalidos(DatosInvalidosException ex) {
+        return datosInvalidos(List.of(new ErrorDeCampo(ex.getCampo(), ex.getMessage())));
     }
 
     @ExceptionHandler(ServicioNoDisponibleException.class)
