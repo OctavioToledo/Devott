@@ -48,3 +48,8 @@ management:
     web:
       exposure:
         include: health
+  endpoint:
+    health:
+      # /actuator/health/liveness y /actuator/health/readiness para los chequeos del deploy.
+      probes:
+        enabled: true
