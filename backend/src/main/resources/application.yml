@@ -26,6 +26,11 @@ server:
 devott:
   api:
     version: v1
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  supabase:
+    # Por defecto apunta a Supabase local (supabase start). Las claves se piden recién al validar un token.
+    url: ${SUPABASE_URL:http://localhost:54321}
+    jwt-issuer: ${SUPABASE_JWT_ISSUER:${devott.supabase.url}/auth/v1}
 
 springdoc:
   api-docs:
