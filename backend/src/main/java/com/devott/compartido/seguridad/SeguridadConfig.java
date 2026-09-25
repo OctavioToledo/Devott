@@ -30,7 +30,7 @@ public class SeguridadConfig {
     static final String AUDIENCIA_SUPABASE = "authenticated";
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, ErroresDeSeguridad errores) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -45,7 +45,13 @@ public class SeguridadConfig {
                                 "/api/v1/contacto/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/eventos/vista").permitAll()
                         .anyRequest().authenticated())
-                .oauth2ResourceServer(o -> o.jwt(Customizer.withDefaults()))
+                .oauth2ResourceServer(o -> o
+                        .jwt(Customizer.withDefaults())
+                        .authenticationEntryPoint(errores)
+                        .accessDeniedHandler(errores))
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(errores)
+                        .accessDeniedHandler(errores))
                 .build();
     }
 
