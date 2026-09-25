@@ -28,6 +28,17 @@ describe("pedirApi", () => {
     expect(url).toBe("http://localhost:8080/api/v1/me");
     expect(init.headers.Authorization).toBe("Bearer abc");
     expect(init.body).toBeUndefined();
+    expect(init.cache).toBe("no-store");
+  });
+
+  it("deja que Next cachee los datos públicos si se pide", async () => {
+    const fetchFalso = responder(Response.json([]));
+
+    await pedirApi("/catalogo/marcas", { revalidar: 3600 });
+
+    const [, init] = fetchFalso.mock.calls[0];
+    expect(init.next).toEqual({ revalidate: 3600 });
+    expect(init.cache).toBeUndefined();
   });
 
   it("serializa el cuerpo como JSON", async () => {

@@ -22,6 +22,8 @@ Para desarrollo local, levantá la base con `docker compose up -d` desde `infra/
 
 El esquema se versiona con Flyway en `src/main/resources/db/migration`. Nunca se modifica a mano ni se edita una migración ya aplicada: cada cambio es una migración nueva (`V2__...sql`). Hibernate solo valida que las entidades coincidan con el esquema.
 
+El catálogo de marcas y modelos está en `R__catalogo.sql`, una migración repetible: para sumar una marca o un modelo, agregá la fila en ese archivo y Flyway lo vuelve a aplicar en el próximo arranque. Solo agrega (`ON CONFLICT DO NOTHING`); para renombrar o borrar hace falta una migración versionada.
+
 Contra Supabase, la conexión va por el pooler. En modo transacción (puerto 6543), agregá `prepareThreshold=0` a la URL JDBC. Antes de la primera migración, activá la extensión PostGIS desde el panel de Supabase.
 
 ## Autenticación

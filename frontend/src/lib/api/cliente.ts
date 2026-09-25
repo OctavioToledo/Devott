@@ -20,6 +20,8 @@ export type OpcionesPedido = {
   cuerpo?: unknown;
   token?: string | null;
   signal?: AbortSignal;
+  /** Segundos que Next puede reutilizar la respuesta. Solo para datos públicos; sin esto, no se cachea. */
+  revalidar?: number;
 };
 
 /**
@@ -27,7 +29,7 @@ export type OpcionesPedido = {
  * Devuelve el JSON de la respuesta, o undefined si viene vacía (204).
  */
 export async function pedirApi<T>(ruta: string, opciones: OpcionesPedido = {}): Promise<T> {
-  const { metodo = "GET", cuerpo, token, signal } = opciones;
+  const { metodo = "GET", cuerpo, token, signal, revalidar } = opciones;
   const headers: Record<string, string> = { Accept: "application/json" };
   if (cuerpo !== undefined) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -38,7 +40,7 @@ export async function pedirApi<T>(ruta: string, opciones: OpcionesPedido = {}): 
       method: metodo,
       headers,
       body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
-      cache: "no-store",
+      ...(revalidar === undefined ? { cache: "no-store" as const } : { next: { revalidate: revalidar } }),
       signal,
     });
   } catch (causa) {
