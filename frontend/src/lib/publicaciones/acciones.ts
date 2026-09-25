@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ErrorApi } from "@/lib/api/cliente";
 import { pedirApiServidor } from "@/lib/api/servidor";
-import type { EstadoPublicacion, MiPublicacion, PublicacionRequest } from "@/lib/api/tipos";
+import type { EstadoPublicacion, MiPublicacion, PublicacionRequest, SubidaFirmada } from "@/lib/api/tipos";
 
 export type ResultadoGuardadoPublicacion = {
   mensaje: string;
@@ -71,4 +71,47 @@ export async function eliminarPublicacion(id: string): Promise<string | null> {
     if (e instanceof ErrorApi) return e.detalle;
     throw e;
   }
+}
+
+export type Resultado<T> = { ok: true; valor: T } | { ok: false; mensaje: string };
+
+async function intentar<T>(pedido: () => Promise<T>): Promise<Resultado<T>> {
+  try {
+    return { ok: true, valor: await pedido() };
+  } catch (e) {
+    if (e instanceof ErrorApi) return { ok: false, mensaje: e.errores[0]?.mensaje ?? e.detalle };
+    throw e;
+  }
+}
+
+const rutaFotos = (id: string) => `/me/publicaciones/${encodeURIComponent(id)}/fotos`;
+
+export async function pedirSubidaFoto(publicacionId: string, contentType: string) {
+  return intentar(() =>
+    pedirApiServidor<SubidaFirmada>(`${rutaFotos(publicacionId)}/url-subida`, { metodo: "POST", cuerpo: { contentType } }),
+  );
+}
+
+export async function confirmarFoto(publicacionId: string, ruta: string, ancho: number, alto: number) {
+  const resultado = await intentar(() =>
+    pedirApiServidor<MiPublicacion>(rutaFotos(publicacionId), { metodo: "POST", cuerpo: { ruta, ancho, alto } }),
+  );
+  if (resultado.ok) await refrescar(resultado.valor);
+  return resultado;
+}
+
+export async function eliminarFoto(publicacionId: string, fotoId: string) {
+  const resultado = await intentar(() =>
+    pedirApiServidor<MiPublicacion>(`${rutaFotos(publicacionId)}/${encodeURIComponent(fotoId)}`, { metodo: "DELETE" }),
+  );
+  if (resultado.ok) await refrescar(resultado.valor);
+  return resultado;
+}
+
+export async function reordenarFotos(publicacionId: string, fotoIds: string[]) {
+  const resultado = await intentar(() =>
+    pedirApiServidor<MiPublicacion>(`${rutaFotos(publicacionId)}/orden`, { metodo: "PUT", cuerpo: { fotoIds } }),
+  );
+  if (resultado.ok) await refrescar(resultado.valor);
+  return resultado;
 }

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AccionesPublicacion } from "@/components/publicaciones/AccionesPublicacion";
 import { EstadoBadge } from "@/components/publicaciones/EstadoBadge";
 import { FormularioPublicacion } from "@/components/publicaciones/FormularioPublicacion";
+import { GestorFotos } from "@/components/publicaciones/GestorFotos";
 import { obtenerMarcas, obtenerModelos } from "@/lib/api/catalogo";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { miPublicacion } from "@/lib/publicaciones/consultas";
@@ -44,6 +45,10 @@ export default async function EditarPublicacion({ params, searchParams }: PagePr
       <section aria-label="Estado de la publicación" className="rounded-[18px] border border-borde bg-superficie p-4">
         <AccionesPublicacion id={publicacion.id} titulo={publicacion.titulo} estado={publicacion.estado} enEdicion />
       </section>
+
+      <div className="rounded-[18px] border border-borde bg-superficie p-4 sm:p-5">
+        <GestorFotos publicacion={publicacion} />
+      </div>
 
       <FormularioPublicacion
         marcas={marcas}

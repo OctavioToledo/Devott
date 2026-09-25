@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { TarjetaPublicacion } from "@/lib/api/tipos";
 import { CONDICIONES, formatoKm, formatoPrecio } from "@/lib/publicaciones/etiquetas";
 import { SiluetaAuto } from "./SiluetaAuto";
@@ -6,8 +7,12 @@ import { SiluetaAuto } from "./SiluetaAuto";
 export function TarjetaStock({ publicacion: p }: { publicacion: TarjetaPublicacion }) {
   return (
     <article className="flex flex-col overflow-hidden rounded-[18px] border border-borde bg-superficie">
-      <div className="relative flex h-28 items-center justify-center bg-[#dcd1be]">
-        <SiluetaAuto />
+      <div className="relative flex h-28 items-center justify-center overflow-hidden bg-[#dcd1be]">
+        {p.portada ? (
+          <Image src={p.portada} alt="" fill sizes="(min-width: 640px) 240px, 50vw" className="object-cover" unoptimized />
+        ) : (
+          <SiluetaAuto />
+        )}
         <span className="absolute top-2 left-2 rounded-md bg-tinta px-2 py-1 text-[11px] font-bold text-fondo">
           {CONDICIONES[p.condicion].toUpperCase()}
         </span>

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ErrorApi } from "@/lib/api/cliente";
 import { pedirApiServidor } from "@/lib/api/servidor";
-import type { MiVendedor, SlugDisponible, VendedorRequest } from "@/lib/api/tipos";
+import type { MiVendedor, SlugDisponible, SubidaFirmada, VendedorRequest } from "@/lib/api/tipos";
 
 export type ResultadoGuardado = {
   mensaje: string;
@@ -48,5 +48,38 @@ export async function consultarSlug(slug: string): Promise<SlugDisponible | null
     return await pedirApiServidor<SlugDisponible>(`/me/vendedor/slug-disponible?slug=${encodeURIComponent(slug)}`);
   } catch {
     return null;
+  }
+}
+
+export type ResultadoLogo = { ok: true; vendedor: MiVendedor } | { ok: false; mensaje: string };
+
+export async function pedirSubidaLogo(
+  contentType: string,
+): Promise<{ ok: true; subida: SubidaFirmada } | { ok: false; mensaje: string }> {
+  try {
+    const subida = await pedirApiServidor<SubidaFirmada>("/me/vendedor/logo/url-subida", {
+      metodo: "POST",
+      cuerpo: { contentType },
+    });
+    return { ok: true, subida };
+  } catch (e) {
+    if (e instanceof ErrorApi) return { ok: false, mensaje: e.errores[0]?.mensaje ?? e.detalle };
+    throw e;
+  }
+}
+
+/** Confirma el logo subido (ruta) o lo quita (null). */
+export async function guardarLogo(ruta: string | null): Promise<ResultadoLogo> {
+  try {
+    const vendedor = await pedirApiServidor<MiVendedor>("/me/vendedor/logo", {
+      metodo: ruta ? "PUT" : "DELETE",
+      cuerpo: ruta ? { ruta } : undefined,
+    });
+    revalidatePath(`/${vendedor.slug}`);
+    revalidatePath("/panel", "layout");
+    return { ok: true, vendedor };
+  } catch (e) {
+    if (e instanceof ErrorApi) return { ok: false, mensaje: e.errores[0]?.mensaje ?? e.detalle };
+    throw e;
   }
 }

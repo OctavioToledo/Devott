@@ -30,6 +30,15 @@ Contra Supabase, la conexión va por el pooler. En modo transacción (puerto 654
 
 - **Georef** (`GEOREF_URL`, por defecto https://apis.datos.gob.ar/georef/api): API pública del Gobierno argentino para buscar localidades con sus coordenadas. `GET /api/v1/ubicaciones` la consulta y cachea las respuestas una semana. Si no responde, la API devuelve 503.
 
+## Almacenamiento de fotos y logos
+
+`ALMACENAMIENTO` elige la implementación de `AlmacenDeArchivos`:
+
+- `local` (por defecto): guarda en `ALMACENAMIENTO_LOCAL_DIR` y sirve los archivos en `/almacenamiento-local/**`. Las subidas usan URLs firmadas con HMAC que vencen a los 15 minutos, igual que en Supabase. Solo para desarrollo.
+- `supabase`: Supabase Storage. Requiere `SUPABASE_SECRET_KEY` y un bucket público (`SUPABASE_BUCKET`, por defecto `fotos`). Crealo en **Storage > New bucket** marcado como *Public*, sin políticas de escritura: las subidas solo se hacen con las URLs firmadas que genera el backend.
+
+Rutas: `publicaciones/{publicacionId}/{uuid}.webp` y `vendedores/{vendedorId}/logo-{uuid}.webp`. Al borrar una foto, una publicación o reemplazar el logo, los archivos se borran después de confirmar la transacción.
+
 ## Autenticación
 
 La API valida los access tokens de Supabase Auth: firma (con las claves públicas del JWKS del proyecto), emisor y audiencia `authenticated`. El proyecto de Supabase tiene que usar claves de firma asimétricas (Settings > JWT Keys). El secreto HS256 heredado no está soportado.

@@ -37,6 +37,8 @@ npm start       # sirve el build
 | `src/components/layout` | Encabezado y demás piezas del layout                             |
 | `src/lib/api`           | Cliente de la API de Spring y tipos de sus respuestas            |
 | `src/lib/auth`          | Sesión, rutas privadas y server actions de login                 |
+| `src/lib/publicaciones` | Consultas, server actions, etiquetas y formato de precios y km   |
+| `src/lib/imagenes`      | Compresión en el navegador (WebP, 1600 px) y subida con progreso |
 | `src/lib/vendedores`    | Consultas, server actions y formato del perfil de vendedor       |
 | `src/lib/supabase`      | Clientes de Supabase (navegador, servidor y proxy)               |
 | `src/proxy.ts`          | Refresca la sesión en cada request y protege las rutas privadas  |
@@ -44,6 +46,15 @@ npm start       # sirve el build
 ## Rutas de primer nivel y slugs
 
 Los perfiles viven en `devott.com/<slug>`, así que cada ruta de primer nivel del sitio (`/panel`, `/ingresar`, `/contacto`…) tiene que estar en la lista de slugs reservados del backend (`SlugsReservados.java`). Si agregás una ruta nueva en `src/app`, sumala ahí.
+
+## Fotos y logo
+
+1. El navegador comprime la imagen (WebP, lado más largo de 1600 px; 512 px para el logo).
+2. Una server action pide a la API la URL de subida firmada.
+3. El navegador sube el archivo directo al almacenamiento con esa URL, con barra de progreso.
+4. Una server action confirma la foto en la API.
+
+En desarrollo el almacenamiento es un directorio del backend (`ALMACENAMIENTO=local`), así que se pueden subir fotos sin Supabase. En producción es Supabase Storage (ver el README del backend).
 
 ## Diseño
 

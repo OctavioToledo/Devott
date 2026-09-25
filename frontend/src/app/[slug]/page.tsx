@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { clasesBoton } from "@/components/ui/boton";
@@ -38,6 +39,7 @@ export async function generateMetadata({ params }: PageProps<"/[slug]">): Promis
       title: `${vendedor.nombrePublico} · Devott`,
       description: descripcion,
       url: `/${vendedor.slug}`,
+      images: vendedor.logoUrl ? [{ url: vendedor.logoUrl, alt: `Logo de ${vendedor.nombrePublico}` }] : undefined,
     },
   };
 }
@@ -66,12 +68,18 @@ export default async function PerfilPublico({ params, searchParams }: PageProps<
       </div>
 
       <div className="mx-auto -mt-11 flex w-full max-w-3xl flex-col gap-3.5 px-4">
-        <div
-          aria-hidden="true"
-          className="font-titulo flex size-[88px] items-center justify-center rounded-3xl border-4 border-fondo bg-marca text-[32px] font-extrabold text-white"
-        >
-          {iniciales(vendedor.nombrePublico)}
-        </div>
+        {vendedor.logoUrl ? (
+          <div className="relative size-[88px] overflow-hidden rounded-3xl border-4 border-fondo bg-superficie">
+            <Image src={vendedor.logoUrl} alt={`Logo de ${vendedor.nombrePublico}`} fill sizes="88px" className="object-contain" unoptimized />
+          </div>
+        ) : (
+          <div
+            aria-hidden="true"
+            className="font-titulo flex size-[88px] items-center justify-center rounded-3xl border-4 border-fondo bg-marca text-[32px] font-extrabold text-white"
+          >
+            {iniciales(vendedor.nombrePublico)}
+          </div>
+        )}
 
         <div>
           <h1 className="font-titulo text-[30px] leading-[1.05] font-extrabold tracking-[-1px]">{vendedor.nombrePublico}</h1>

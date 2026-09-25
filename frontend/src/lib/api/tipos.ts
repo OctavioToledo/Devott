@@ -59,6 +59,7 @@ export type MiVendedor = {
   telefono: string | null;
   descripcion: string | null;
   direccion: string | null;
+  logoUrl: string | null;
   localidad: { ciudad: string; provincia: string; lat: number | null; lng: number | null };
   horarios: string | null;
   instagram: string | null;
@@ -72,6 +73,7 @@ export type VendedorPublico = {
   slug: string;
   tipo: TipoVendedor;
   nombrePublico: string;
+  logoUrl: string | null;
   descripcion: string | null;
   direccion: string | null;
   ciudad: string | null;
@@ -154,11 +156,30 @@ type DatosComunesPublicacion = {
   publicadaEn: string | null;
 };
 
+export type Foto = {
+  id: string;
+  url: string;
+  orden: number;
+  ancho: number | null;
+  alto: number | null;
+};
+
+/** Respuesta de los endpoints url-subida: el navegador sube el archivo directo con estos datos. */
+export type SubidaFirmada = {
+  ruta: string;
+  url: string;
+  metodo: string;
+  headers: Record<string, string>;
+  venceEn: string;
+};
+
 /** Respuesta de /api/v1/me/publicaciones. */
 export type MiPublicacion = DatosComunesPublicacion & {
   id: string;
   localidad: { ciudad: string | null; provincia: string | null; lat: number | null; lng: number | null };
-  cantidadFotos: number;
+  fotos: Foto[];
+  /** Máximo de fotos que permite el plan. */
+  maxFotos: number;
   vendidaEn: string | null;
   creadaEn: string;
   actualizadaEn: string;
@@ -168,6 +189,7 @@ export type MiPublicacion = DatosComunesPublicacion & {
 export type PublicacionPublica = DatosComunesPublicacion & {
   ciudad: string | null;
   provincia: string | null;
+  fotos: Foto[];
   vendedor: {
     slug: string;
     nombrePublico: string;
@@ -192,6 +214,8 @@ export type TarjetaPublicacion = {
   financia: boolean;
   ciudad: string | null;
   provincia: string | null;
+  /** URL de la primera foto, o null si no tiene. */
+  portada: string | null;
   cantidadFotos: number;
 };
 
