@@ -44,6 +44,10 @@ devott:
     # Por defecto apunta a Supabase local (supabase start). Las claves se piden recién al validar un token.
     url: ${SUPABASE_URL:http://localhost:54321}
     jwt-issuer: ${SUPABASE_JWT_ISSUER:${devott.supabase.url}/auth/v1}
+  limites:
+    # Límites para todos los vendedores hasta que existan los planes (paso 10).
+    max-publicaciones: ${DEVOTT_MAX_PUBLICACIONES:50}
+    max-fotos: ${DEVOTT_MAX_FOTOS:20}
   georef:
     # API pública de localidades del Gobierno argentino: https://apis.datos.gob.ar/georef
     url: ${GEOREF_URL:https://apis.datos.gob.ar/georef/api}

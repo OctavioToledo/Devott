@@ -29,6 +29,10 @@ public class VendedorService {
         return vendedores.findByUsuarioId(usuarioId);
     }
 
+    public Optional<Vendedor> porId(UUID id) {
+        return vendedores.findById(id);
+    }
+
     public Vendedor porSlug(String slug) {
         return vendedores.findBySlug(slug)
                 .orElseThrow(() -> new RecursoNoEncontradoException("No existe ese vendedor."));
