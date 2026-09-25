@@ -123,7 +123,8 @@ class PublicacionesControllerTests {
                 .andExpect(jsonPath("$.aceptaPermuta").value(false))
                 .andExpect(jsonPath("$.localidad.ciudad").value("Villa María"))
                 .andExpect(jsonPath("$.localidad.lat").value(-32.41))
-                .andExpect(jsonPath("$.cantidadFotos").value(0))
+                .andExpect(jsonPath("$.fotos.length()").value(0))
+                .andExpect(jsonPath("$.maxFotos").value(20))
                 .andExpect(jsonPath("$.publicadaEn").doesNotExist());
     }
 

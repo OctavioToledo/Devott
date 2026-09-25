@@ -1,0 +1,6 @@
+# Se suma a la configuración principal durante los tests.
+devott:
+  almacenamiento:
+    tipo: local
+    local:
+      directorio: target/almacenamiento-tests

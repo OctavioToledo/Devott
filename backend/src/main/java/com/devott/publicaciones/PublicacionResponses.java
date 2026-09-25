@@ -1,17 +1,31 @@
 package com.devott.publicaciones;
 
 import com.devott.catalogo.ModeloConMarca;
+import com.devott.compartido.almacenamiento.AlmacenDeArchivos;
 import com.devott.vendedores.TipoVendedor;
 import com.devott.vendedores.Vendedor;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 final class PublicacionResponses {
 
     private PublicacionResponses() {
+    }
+
+    @Schema(name = "Foto")
+    record FotoResponse(UUID id, String url, int orden, Integer ancho, Integer alto) {
+
+        static FotoResponse de(Foto f, AlmacenDeArchivos almacen) {
+            return new FotoResponse(f.getId(), almacen.urlPublica(f.getStoragePath()), f.getOrden(), f.getAncho(), f.getAlto());
+        }
+
+        static List<FotoResponse> de(List<Foto> fotos, AlmacenDeArchivos almacen) {
+            return fotos.stream().map(f -> de(f, almacen)).toList();
+        }
     }
 
     @Schema(name = "ModeloDePublicacion")
@@ -57,20 +71,21 @@ final class PublicacionResponses {
             boolean unicoDueno,
             String descripcion,
             Localidad localidad,
-            long cantidadFotos,
+            List<FotoResponse> fotos,
+            @Schema(description = "Máximo de fotos que permite el plan") int maxFotos,
             Instant publicadaEn,
             Instant vendidaEn,
             Instant creadaEn,
             Instant actualizadaEn) {
 
-        static MiPublicacion de(PublicacionVista v) {
+        static MiPublicacion de(PublicacionVista v, AlmacenDeArchivos almacen, int maxFotos) {
             Publicacion p = v.publicacion();
             return new MiPublicacion(p.getId(), p.getSlug(), p.getEstado(), v.modelo().titulo(),
                     ModeloResumen.de(v.modelo()), p.getVersion(), p.getAnio(), p.getKm(), p.getCondicion(),
                     p.getPrecio(), p.getMoneda(), p.getCarroceria(), p.getCombustible(), p.getTransmision(),
                     p.getTraccion(), p.getColor(), p.getPuertas(), p.isFinancia(), p.isAceptaPermuta(),
-                    p.isUnicoDueno(), p.getDescripcion(), Localidad.de(p), v.cantidadFotos(), p.getPublicadaEn(),
-                    p.getVendidaEn(), p.getCreadaEn(), p.getActualizadaEn());
+                    p.isUnicoDueno(), p.getDescripcion(), Localidad.de(p), FotoResponse.de(v.fotos(), almacen), maxFotos,
+                    p.getPublicadaEn(), p.getVendidaEn(), p.getCreadaEn(), p.getActualizadaEn());
         }
     }
 
@@ -109,17 +124,18 @@ final class PublicacionResponses {
             String descripcion,
             String ciudad,
             String provincia,
+            List<FotoResponse> fotos,
             Instant publicadaEn,
             VendedorResumen vendedor) {
 
-        static PublicacionPublica de(PublicacionVista v, Vendedor vendedor) {
+        static PublicacionPublica de(PublicacionVista v, Vendedor vendedor, AlmacenDeArchivos almacen) {
             Publicacion p = v.publicacion();
             return new PublicacionPublica(p.getSlug(), p.getEstado(), v.modelo().titulo(),
                     ModeloResumen.de(v.modelo()), p.getVersion(), p.getAnio(), p.getKm(), p.getCondicion(),
                     p.getPrecio(), p.getMoneda(), p.getCarroceria(), p.getCombustible(), p.getTransmision(),
                     p.getTraccion(), p.getColor(), p.getPuertas(), p.isFinancia(), p.isAceptaPermuta(),
-                    p.isUnicoDueno(), p.getDescripcion(), p.getCiudad(), p.getProvincia(), p.getPublicadaEn(),
-                    VendedorResumen.de(vendedor));
+                    p.isUnicoDueno(), p.getDescripcion(), p.getCiudad(), p.getProvincia(),
+                    FotoResponse.de(v.fotos(), almacen), p.getPublicadaEn(), VendedorResumen.de(vendedor));
         }
     }
 
@@ -138,13 +154,15 @@ final class PublicacionResponses {
             boolean financia,
             String ciudad,
             String provincia,
-            long cantidadFotos) {
+            @Schema(description = "URL de la primera foto, o null si no tiene") String portada,
+            int cantidadFotos) {
 
-        static Tarjeta de(PublicacionVista v) {
+        static Tarjeta de(PublicacionVista v, AlmacenDeArchivos almacen) {
             Publicacion p = v.publicacion();
+            String portada = v.fotos().isEmpty() ? null : almacen.urlPublica(v.fotos().getFirst().getStoragePath());
             return new Tarjeta(p.getSlug(), p.getEstado(), v.modelo().titulo(), p.getVersion(), p.getAnio(),
                     p.getKm(), p.getCondicion(), p.getPrecio(), p.getMoneda(), p.isFinancia(), p.getCiudad(),
-                    p.getProvincia(), v.cantidadFotos());
+                    p.getProvincia(), portada, v.fotos().size());
         }
     }
 }

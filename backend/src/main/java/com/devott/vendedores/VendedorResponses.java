@@ -21,6 +21,7 @@ final class VendedorResponses {
             String telefono,
             String descripcion,
             String direccion,
+            String logoUrl,
             Localidad localidad,
             String horarios,
             String instagram,
@@ -28,9 +29,9 @@ final class VendedorResponses {
             boolean verificado,
             Instant creadoEn) {
 
-        static MiVendedor de(Vendedor v) {
+        static MiVendedor de(Vendedor v, String logoUrl) {
             return new MiVendedor(v.getId(), v.getTipo(), v.getSlug(), v.getNombrePublico(),
-                    Whatsapp.local(v.getWhatsapp()), v.getTelefono(), v.getDescripcion(), v.getDireccion(),
+                    Whatsapp.local(v.getWhatsapp()), v.getTelefono(), v.getDescripcion(), v.getDireccion(), logoUrl,
                     Localidad.de(v), v.getHorarios(), v.getInstagram(), v.getFacebook(), v.isVerificado(),
                     v.getCreadoEn());
         }
@@ -42,6 +43,7 @@ final class VendedorResponses {
             String slug,
             TipoVendedor tipo,
             String nombrePublico,
+            String logoUrl,
             String descripcion,
             String direccion,
             String ciudad,
@@ -52,8 +54,8 @@ final class VendedorResponses {
             boolean verificado,
             Instant creadoEn) {
 
-        static VendedorPublico de(Vendedor v) {
-            return new VendedorPublico(v.getSlug(), v.getTipo(), v.getNombrePublico(), v.getDescripcion(),
+        static VendedorPublico de(Vendedor v, String logoUrl) {
+            return new VendedorPublico(v.getSlug(), v.getTipo(), v.getNombrePublico(), logoUrl, v.getDescripcion(),
                     v.getDireccion(), v.getCiudad(), v.getProvincia(), v.getHorarios(), v.getInstagram(),
                     v.getFacebook(), v.isVerificado(), v.getCreadoEn());
         }

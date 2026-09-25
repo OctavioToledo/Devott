@@ -1,5 +1,7 @@
 package com.devott.publicaciones;
 
+import com.devott.compartido.almacenamiento.AlmacenDeArchivos;
+import com.devott.compartido.almacenamiento.SubidaFirmada;
 import com.devott.publicaciones.PublicacionResponses.MiPublicacion;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -28,22 +30,26 @@ import java.util.UUID;
 class MisPublicacionesController {
 
     private final PublicacionService publicaciones;
+    private final FotoService fotos;
+    private final AlmacenDeArchivos almacen;
 
-    MisPublicacionesController(PublicacionService publicaciones) {
+    MisPublicacionesController(PublicacionService publicaciones, FotoService fotos, AlmacenDeArchivos almacen) {
         this.publicaciones = publicaciones;
+        this.fotos = fotos;
+        this.almacen = almacen;
     }
 
     @GetMapping
     @Operation(summary = "Lista mis publicaciones, en todos los estados", description = "Las editadas más recientemente primero.")
     List<MiPublicacion> listar(@AuthenticationPrincipal Jwt jwt) {
-        return publicaciones.misPublicaciones(usuarioId(jwt)).stream().map(MiPublicacion::de).toList();
+        return publicaciones.misPublicaciones(usuarioId(jwt)).stream().map(this::respuesta).toList();
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Devuelve una de mis publicaciones")
     @ApiResponse(responseCode = "404", description = "No existe o es de otro vendedor")
     MiPublicacion ver(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
-        return MiPublicacion.de(publicaciones.miPublicacion(usuarioId(jwt), id));
+        return respuesta(publicaciones.miPublicacion(usuarioId(jwt), id));
     }
 
     @PostMapping
@@ -51,14 +57,14 @@ class MisPublicacionesController {
     @Operation(summary = "Crea una publicación en borrador")
     @ApiResponse(responseCode = "409", description = "El usuario todavía no tiene perfil de vendedor")
     MiPublicacion crear(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody PublicacionRequest request) {
-        return MiPublicacion.de(publicaciones.crear(usuarioId(jwt), request));
+        return respuesta(publicaciones.crear(usuarioId(jwt), request));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Edita una publicación", description = "No cambia su estado ni su slug.")
     MiPublicacion actualizar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
                              @Valid @RequestBody PublicacionRequest request) {
-        return MiPublicacion.de(publicaciones.actualizar(usuarioId(jwt), id, request));
+        return respuesta(publicaciones.actualizar(usuarioId(jwt), id, request));
     }
 
     @DeleteMapping("/{id}")
@@ -75,7 +81,45 @@ class MisPublicacionesController {
     @ApiResponse(responseCode = "409", description = "Transición no permitida, sin fotos o límite del plan alcanzado")
     MiPublicacion cambiarEstado(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
                                 @Valid @RequestBody CambioEstadoRequest request) {
-        return MiPublicacion.de(publicaciones.cambiarEstado(usuarioId(jwt), id, request.estado()));
+        return respuesta(publicaciones.cambiarEstado(usuarioId(jwt), id, request.estado()));
+    }
+
+    // Fotos -------------------------------------------------------------------
+
+    @PostMapping("/{id}/fotos/url-subida")
+    @Operation(summary = "Pide una URL para subir una foto",
+            description = "Valida que la publicación sea propia y el límite de fotos. El navegador sube el archivo "
+                    + "directo al almacenamiento con esa URL y después confirma con POST .../fotos.")
+    @ApiResponse(responseCode = "409", description = "Límite de fotos alcanzado")
+    SubidaFirmada urlSubida(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+                            @Valid @RequestBody FotoRequests.PedidoSubida request) {
+        return fotos.pedirSubida(usuarioId(jwt), id, request.contentType());
+    }
+
+    @PostMapping("/{id}/fotos")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Confirma una foto subida", description = "La agrega al final. Devuelve la publicación actualizada.")
+    MiPublicacion confirmarFoto(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+                                @Valid @RequestBody FotoRequests.Confirmacion request) {
+        return respuesta(fotos.confirmar(usuarioId(jwt), id, request.ruta(), request.ancho(), request.alto()));
+    }
+
+    @DeleteMapping("/{id}/fotos/{fotoId}")
+    @Operation(summary = "Elimina una foto", description = "Reordena las que quedan. Devuelve la publicación actualizada.")
+    @ApiResponse(responseCode = "409", description = "Es la única foto de una publicación activa")
+    MiPublicacion eliminarFoto(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @PathVariable UUID fotoId) {
+        return respuesta(fotos.eliminar(usuarioId(jwt), id, fotoId));
+    }
+
+    @PutMapping("/{id}/fotos/orden")
+    @Operation(summary = "Reordena las fotos", description = "La primera es la portada.")
+    MiPublicacion reordenarFotos(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+                                 @Valid @RequestBody FotoRequests.Orden request) {
+        return respuesta(fotos.reordenar(usuarioId(jwt), id, request.fotoIds()));
+    }
+
+    private MiPublicacion respuesta(PublicacionVista vista) {
+        return MiPublicacion.de(vista, almacen, fotos.maxFotos(vista.publicacion().getVendedorId()));
     }
 
     private static UUID usuarioId(Jwt jwt) {

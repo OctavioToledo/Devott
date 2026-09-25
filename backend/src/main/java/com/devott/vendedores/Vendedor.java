@@ -87,6 +87,10 @@ public class Vendedor {
         this.facebook = datos.facebook();
     }
 
+    void cambiarLogo(String logoPath) {
+        this.logoPath = logoPath;
+    }
+
     public UUID getId() {
         return id;
     }

@@ -1,5 +1,6 @@
 package com.devott.publicaciones;
 
+import com.devott.compartido.almacenamiento.AlmacenDeArchivos;
 import com.devott.compartido.web.Pagina;
 import com.devott.publicaciones.PublicacionResponses.PublicacionPublica;
 import com.devott.publicaciones.PublicacionResponses.Tarjeta;
@@ -24,10 +25,13 @@ class PublicacionesPublicasController {
 
     private final PublicacionService publicaciones;
     private final VendedorService vendedores;
+    private final AlmacenDeArchivos almacen;
 
-    PublicacionesPublicasController(PublicacionService publicaciones, VendedorService vendedores) {
+    PublicacionesPublicasController(PublicacionService publicaciones, VendedorService vendedores,
+                                    AlmacenDeArchivos almacen) {
         this.publicaciones = publicaciones;
         this.vendedores = vendedores;
+        this.almacen = almacen;
     }
 
     @GetMapping("/api/v1/publicaciones/{slug}")
@@ -35,7 +39,7 @@ class PublicacionesPublicasController {
     @ApiResponse(responseCode = "404", description = "No existe, está en borrador o pausada")
     PublicacionPublica detalle(@PathVariable String slug) {
         PublicacionVista vista = publicaciones.publica(slug);
-        return PublicacionPublica.de(vista, vendedores.porId(vista.publicacion().getVendedorId()).orElseThrow());
+        return PublicacionPublica.de(vista, vendedores.porId(vista.publicacion().getVendedorId()).orElseThrow(), almacen);
     }
 
     @GetMapping("/api/v1/vendedores/{slug}/publicaciones")
@@ -46,6 +50,6 @@ class PublicacionesPublicasController {
             @RequestParam(defaultValue = "0") @Min(0) int pagina,
             @RequestParam(defaultValue = "24") @Min(1) @Max(60) int tamano) {
         Set<Condicion> condiciones = condicion == null ? EnumSet.allOf(Condicion.class) : EnumSet.of(condicion);
-        return publicaciones.activasDeVendedor(slug, condiciones, pagina, tamano).map(Tarjeta::de);
+        return publicaciones.activasDeVendedor(slug, condiciones, pagina, tamano).map(v -> Tarjeta.de(v, almacen));
     }
 }

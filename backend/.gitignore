@@ -34,3 +34,6 @@ build/
 
 ### Secretos ###
 .env
+
+### Archivos del almacenamiento local (desarrollo) ###
+almacenamiento-local/

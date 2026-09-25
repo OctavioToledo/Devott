@@ -45,6 +45,9 @@ public class SeguridadConfig {
                                 "/api/v1/ubicaciones/**",
                                 "/api/v1/contacto/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/eventos/vista").permitAll()
+                        // Almacenamiento local (solo desarrollo): lectura pública, subida con URL firmada.
+                        .requestMatchers(HttpMethod.GET, "/almacenamiento-local/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/almacenamiento-local/subir/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(o -> o
                         .jwt(Customizer.withDefaults())
@@ -91,6 +94,7 @@ public class SeguridadConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", cors);
+        source.registerCorsConfiguration("/almacenamiento-local/**", cors);
         return source;
     }
 }

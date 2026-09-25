@@ -1,5 +1,7 @@
 package com.devott.vendedores;
 
+import com.devott.compartido.almacenamiento.AlmacenDeArchivos;
+import com.devott.compartido.almacenamiento.SubidaFirmada;
 import com.devott.compartido.errores.ConflictoException;
 import com.devott.compartido.errores.DatosInvalidosException;
 import com.devott.compartido.errores.RecursoNoEncontradoException;
@@ -9,9 +11,13 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 @Transactional(readOnly = true)
@@ -19,10 +25,14 @@ public class VendedorService {
 
     private static final GeometryFactory WGS84 = new GeometryFactory(new PrecisionModel(), 4326);
 
-    private final VendedorRepository vendedores;
+    private static final Pattern LOGO = Pattern.compile("^logo-[0-9a-f-]{36}\\.(webp|jpg)$");
 
-    VendedorService(VendedorRepository vendedores) {
+    private final VendedorRepository vendedores;
+    private final AlmacenDeArchivos almacen;
+
+    VendedorService(VendedorRepository vendedores, AlmacenDeArchivos almacen) {
         this.vendedores = vendedores;
+        this.almacen = almacen;
     }
 
     public Optional<Vendedor> deUsuario(UUID usuarioId) {
@@ -56,6 +66,64 @@ public class VendedorService {
         validarSlug(request.slug(), vendedor.getId());
         vendedor.actualizar(datosDe(request));
         return vendedor;
+    }
+
+    // Logo ---------------------------------------------------------------------
+
+    public SubidaFirmada pedirSubidaLogo(UUID usuarioId, String contentType) {
+        Vendedor vendedor = propio(usuarioId);
+        if (!AlmacenDeArchivos.TIPOS_PERMITIDOS.contains(contentType)) {
+            throw new DatosInvalidosException("contentType", "Subí el logo en formato WebP o JPEG.");
+        }
+        String ruta = carpeta(vendedor) + "logo-" + UUID.randomUUID() + "." + AlmacenDeArchivos.extension(contentType);
+        return almacen.firmarSubida(ruta, contentType);
+    }
+
+    @Transactional
+    public Vendedor guardarLogo(UUID usuarioId, String ruta) {
+        Vendedor vendedor = propio(usuarioId);
+        String carpeta = carpeta(vendedor);
+        if (ruta == null || !ruta.startsWith(carpeta) || !LOGO.matcher(ruta.substring(carpeta.length())).matches()) {
+            throw new DatosInvalidosException("ruta", "El logo no corresponde a tu perfil.");
+        }
+        if (!almacen.existe(ruta)) {
+            throw new DatosInvalidosException("ruta", "No encontramos el logo subido. Probá subirlo de nuevo.");
+        }
+        reemplazarLogo(vendedor, ruta);
+        return vendedor;
+    }
+
+    @Transactional
+    public Vendedor quitarLogo(UUID usuarioId) {
+        Vendedor vendedor = propio(usuarioId);
+        reemplazarLogo(vendedor, null);
+        return vendedor;
+    }
+
+    public String urlDelLogo(Vendedor vendedor) {
+        return vendedor.getLogoPath() == null ? null : almacen.urlPublica(vendedor.getLogoPath());
+    }
+
+    private void reemplazarLogo(Vendedor vendedor, String nuevo) {
+        String anterior = vendedor.getLogoPath();
+        vendedor.cambiarLogo(nuevo);
+        if (anterior != null && !anterior.equals(nuevo)) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    almacen.eliminar(List.of(anterior));
+                }
+            });
+        }
+    }
+
+    private Vendedor propio(UUID usuarioId) {
+        return vendedores.findByUsuarioId(usuarioId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Todavía no creaste tu perfil de vendedor."));
+    }
+
+    private static String carpeta(Vendedor vendedor) {
+        return "vendedores/" + vendedor.getId() + "/";
     }
 
     /**

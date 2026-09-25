@@ -24,6 +24,7 @@ class VendedorPublicoController {
     @Operation(summary = "Perfil público de un vendedor", description = "No incluye el WhatsApp ni el teléfono.")
     @ApiResponse(responseCode = "404", description = "No existe el vendedor")
     VendedorPublico perfil(@PathVariable String slug) {
-        return VendedorPublico.de(vendedores.porSlug(slug));
+        Vendedor vendedor = vendedores.porSlug(slug);
+        return VendedorPublico.de(vendedor, vendedores.urlDelLogo(vendedor));
     }
 }

@@ -2,6 +2,7 @@ package com.devott.publicaciones;
 
 import com.devott.catalogo.CatalogoService;
 import com.devott.catalogo.ModeloConMarca;
+import com.devott.compartido.almacenamiento.AlmacenDeArchivos;
 import com.devott.compartido.errores.ConflictoException;
 import com.devott.compartido.errores.DatosInvalidosException;
 import com.devott.compartido.errores.RecursoNoEncontradoException;
@@ -20,6 +21,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.security.SecureRandom;
 import java.time.Clock;
@@ -48,15 +51,17 @@ public class PublicacionService {
     private final VendedorService vendedores;
     private final CatalogoService catalogo;
     private final LimitesService limites;
+    private final AlmacenDeArchivos almacen;
     private final Clock reloj;
 
     PublicacionService(PublicacionRepository publicaciones, FotoRepository fotos, VendedorService vendedores,
-                       CatalogoService catalogo, LimitesService limites, Clock reloj) {
+                       CatalogoService catalogo, LimitesService limites, AlmacenDeArchivos almacen, Clock reloj) {
         this.publicaciones = publicaciones;
         this.fotos = fotos;
         this.vendedores = vendedores;
         this.catalogo = catalogo;
         this.limites = limites;
+        this.almacen = almacen;
         this.reloj = reloj;
     }
 
@@ -93,7 +98,11 @@ public class PublicacionService {
 
     @Transactional
     public void eliminar(UUID usuarioId, UUID id) {
-        publicaciones.delete(propia(usuarioId, id));
+        Publicacion publicacion = propia(usuarioId, id);
+        List<String> rutas = fotos.findByPublicacionIdOrderByOrdenAsc(id).stream().map(Foto::getStoragePath).toList();
+        // Las filas de foto se borran en cascada; los archivos, después de confirmar la transacción.
+        publicaciones.delete(publicacion);
+        despuesDeConfirmar(() -> almacen.eliminar(rutas));
     }
 
     @Transactional
@@ -154,11 +163,12 @@ public class PublicacionService {
     private List<PublicacionVista> vistas(List<Publicacion> lista) {
         Set<Integer> modeloIds = lista.stream().map(Publicacion::getModeloId).collect(Collectors.toSet());
         Map<Integer, ModeloConMarca> modelos = catalogo.modelosConMarca(modeloIds);
-        Map<UUID, Long> cantidadFotos = fotos.findByPublicacionIdInOrderByOrdenAsc(
+        Map<UUID, List<Foto>> fotosPorPublicacion = fotos.findByPublicacionIdInOrderByOrdenAsc(
                         lista.stream().map(Publicacion::getId).toList())
-                .stream().collect(Collectors.groupingBy(Foto::getPublicacionId, Collectors.counting()));
+                .stream().collect(Collectors.groupingBy(Foto::getPublicacionId));
         return lista.stream()
-                .map(p -> new PublicacionVista(p, modelos.get(p.getModeloId()), cantidadFotos.getOrDefault(p.getId(), 0L)))
+                .map(p -> new PublicacionVista(p, modelos.get(p.getModeloId()),
+                        fotosPorPublicacion.getOrDefault(p.getId(), List.of())))
                 .toList();
     }
 
@@ -226,6 +236,20 @@ public class PublicacionService {
             sufijo.append(ALFABETO_SLUG.charAt(AZAR.nextInt(ALFABETO_SLUG.length())));
         }
         return sufijo.toString();
+    }
+
+    /** Corre la acción cuando la transacción actual se confirma (o ya, si no hay transacción). */
+    static void despuesDeConfirmar(Runnable accion) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    accion.run();
+                }
+            });
+        } else {
+            accion.run();
+        }
     }
 
     private static String textoOpcional(String texto) {

@@ -39,11 +39,21 @@ server:
 devott:
   api:
     version: v1
+  # URL pública de esta API (para armar las URLs del almacenamiento local).
+  api-url: ${API_URL:http://localhost:8080}
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
   supabase:
     # Por defecto apunta a Supabase local (supabase start). Las claves se piden recién al validar un token.
     url: ${SUPABASE_URL:http://localhost:54321}
     jwt-issuer: ${SUPABASE_JWT_ISSUER:${devott.supabase.url}/auth/v1}
+    # Clave secreta (sb_secret_...) para firmar subidas a Storage. Nunca va al frontend.
+    secret-key: ${SUPABASE_SECRET_KEY:}
+  almacenamiento:
+    # local: directorio del backend (desarrollo). supabase: Supabase Storage.
+    tipo: ${ALMACENAMIENTO:local}
+    bucket: ${SUPABASE_BUCKET:fotos}
+    local:
+      directorio: ${ALMACENAMIENTO_LOCAL_DIR:./almacenamiento-local}
   limites:
     # Límites para todos los vendedores hasta que existan los planes (paso 10).
     max-publicaciones: ${DEVOTT_MAX_PUBLICACIONES:50}
