@@ -1,6 +1,24 @@
 spring:
   application:
     name: devott-api
+  config:
+    # En local, carga backend/.env si existe. En producción se usan variables de entorno.
+    import: optional:file:.env[.properties]
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/devott}
+    username: ${SPRING_DATASOURCE_USERNAME:devott}
+    password: ${SPRING_DATASOURCE_PASSWORD:devott}
+  jpa:
+    open-in-view: false
+    hibernate:
+      # El esquema lo maneja Flyway; Hibernate solo verifica que coincida.
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    locations: classpath:db/migration
 
 server:
   port: ${SERVER_PORT:8080}

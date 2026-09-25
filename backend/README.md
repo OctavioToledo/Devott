@@ -14,7 +14,13 @@ No hace falta tener Maven instalado: `./mvnw` lo descarga la primera vez.
 
 ## Variables de entorno
 
-Ver `.env.example`. Spring lee variables del entorno, no el archivo `.env` directamente: exportalas en tu shell o cargalas desde tu IDE.
+Ver `.env.example`. Copialo a `.env` en esta carpeta: al correr desde `backend/`, Spring lo carga solo (`spring.config.import`). Las variables del entorno tienen prioridad sobre el archivo.
+
+Para desarrollo local, levantá la base con `docker compose up -d` desde `infra/`.
+
+## Tests
+
+Los tests de integración levantan Postgres + PostGIS con Testcontainers (imagen `postgis/postgis:17-3.5`), así que necesitan Docker corriendo. No usan la base de docker-compose.
 
 ## Documentación de la API
 
