@@ -15,6 +15,8 @@
   /* Naranja de marca: acciones de publicar y acentos. */
   --color-marca: #c2410c;
   --color-marca-oscuro: #9a340a;
+  /* Variante del naranja para usar sobre fondos oscuros. */
+  --color-marca-claro: #f07a3e;
 
   /* Verde reservado para WhatsApp. */
   --color-whatsapp: #0e7a3f;

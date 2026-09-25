@@ -26,6 +26,10 @@ El catálogo de marcas y modelos está en `R__catalogo.sql`, una migración repe
 
 Contra Supabase, la conexión va por el pooler. En modo transacción (puerto 6543), agregá `prepareThreshold=0` a la URL JDBC. Antes de la primera migración, activá la extensión PostGIS desde el panel de Supabase.
 
+## Servicios externos
+
+- **Georef** (`GEOREF_URL`, por defecto https://apis.datos.gob.ar/georef/api): API pública del Gobierno argentino para buscar localidades con sus coordenadas. `GET /api/v1/ubicaciones` la consulta y cachea las respuestas una semana. Si no responde, la API devuelve 503.
+
 ## Autenticación
 
 La API valida los access tokens de Supabase Auth: firma (con las claves públicas del JWKS del proyecto), emisor y audiencia `authenticated`. El proyecto de Supabase tiene que usar claves de firma asimétricas (Settings > JWT Keys). El secreto HS256 heredado no está soportado.

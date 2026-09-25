@@ -30,13 +30,20 @@ npm start       # sirve el build
 
 | Carpeta                 | Contenido                                                        |
 |-------------------------|------------------------------------------------------------------|
-| `src/app`               | Rutas (App Router). Nombres en español: `/ingresar`, `/cuenta`, `/panel` |
+| `src/app/(sitio)`       | Páginas con el encabezado del sitio: inicio, `/ingresar`, `/cuenta`, `/panel` |
+| `src/app/[slug]`        | Perfil público del vendedor (`devott.com/slug`), con su propio banner |
+| `src/app/contacto`      | Redirecciones a WhatsApp: pasan el token a la API y siguen a `wa.me` |
 | `src/components/ui`     | Componentes base (`Boton`, `BotonLink`, `Logo`)                  |
 | `src/components/layout` | Encabezado y demás piezas del layout                             |
 | `src/lib/api`           | Cliente de la API de Spring y tipos de sus respuestas            |
 | `src/lib/auth`          | Sesión, rutas privadas y server actions de login                 |
+| `src/lib/vendedores`    | Consultas, server actions y formato del perfil de vendedor       |
 | `src/lib/supabase`      | Clientes de Supabase (navegador, servidor y proxy)               |
 | `src/proxy.ts`          | Refresca la sesión en cada request y protege las rutas privadas  |
+
+## Rutas de primer nivel y slugs
+
+Los perfiles viven en `devott.com/<slug>`, así que cada ruta de primer nivel del sitio (`/panel`, `/ingresar`, `/contacto`…) tiene que estar en la lista de slugs reservados del backend (`SlugsReservados.java`). Si agregás una ruta nueva en `src/app`, sumala ahí.
 
 ## Diseño
 

@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Figtree } from "next/font/google";
-import { Encabezado } from "@/components/layout/Encabezado";
 import { urlDelSitio } from "@/lib/config";
 import "./globals.css";
 
@@ -41,7 +40,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es-AR" className={`${figtree.variable} ${bricolage.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">
-        <Encabezado />
         {children}
       </body>
     </html>
