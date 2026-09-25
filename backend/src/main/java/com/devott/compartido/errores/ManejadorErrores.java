@@ -48,6 +48,12 @@ public class ManejadorErrores extends ResponseEntityExceptionHandler {
         return problema(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(ServicioNoDisponibleException.class)
+    ProblemDetail servicioNoDisponible(ServicioNoDisponibleException ex) {
+        log.warn("Servicio externo no disponible: {}", ex.getMessage(), ex.getCause());
+        return problema(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     ProblemDetail integridad(DataIntegrityViolationException ex) {
         log.warn("Violación de integridad de datos", ex);

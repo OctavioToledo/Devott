@@ -19,6 +19,15 @@ spring:
           time_zone: UTC
   flyway:
     locations: classpath:db/migration
+  http:
+    clients:
+      # Para servicios externos (Georef): mejor fallar rápido que colgar el request.
+      connect-timeout: 3s
+      read-timeout: 5s
+  cache:
+    cache-names: localidades
+    caffeine:
+      spec: maximumSize=5000,expireAfterWrite=7d
   web:
     # Mensajes de validación siempre en español, sin importar el Accept-Language.
     locale: es_AR
@@ -35,6 +44,9 @@ devott:
     # Por defecto apunta a Supabase local (supabase start). Las claves se piden recién al validar un token.
     url: ${SUPABASE_URL:http://localhost:54321}
     jwt-issuer: ${SUPABASE_JWT_ISSUER:${devott.supabase.url}/auth/v1}
+  georef:
+    # API pública de localidades del Gobierno argentino: https://apis.datos.gob.ar/georef
+    url: ${GEOREF_URL:https://apis.datos.gob.ar/georef/api}
 
 springdoc:
   api-docs:

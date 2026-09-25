@@ -42,6 +42,7 @@ public class SeguridadConfig {
                                 "/api/v1/publicaciones/**",
                                 "/api/v1/vendedores/**",
                                 "/api/v1/catalogo/**",
+                                "/api/v1/ubicaciones/**",
                                 "/api/v1/contacto/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/eventos/vista").permitAll()
                         .anyRequest().authenticated())
