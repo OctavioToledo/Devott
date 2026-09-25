@@ -3,10 +3,18 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { clasesBoton } from "@/components/ui/boton";
 import { BotonCopiar } from "@/components/ui/BotonCopiar";
+import { TarjetaStock } from "@/components/publicaciones/TarjetaStock";
 import { Logo } from "@/components/ui/Logo";
-import type { VendedorPublico } from "@/lib/api/tipos";
+import type { Condicion, VendedorPublico } from "@/lib/api/tipos";
+import { stockDeVendedor } from "@/lib/publicaciones/consultas";
 import { iniciales, urlDelPerfil, urlVisibleDelPerfil } from "@/lib/vendedores/formato";
 import { vendedorPublico } from "@/lib/vendedores/consultas";
+
+const FILTROS: { valor: string | null; texto: string; condicion?: Condicion }[] = [
+  { valor: null, texto: "Todos" },
+  { valor: "0km", texto: "0 km", condicion: "0KM" },
+  { valor: "usados", texto: "Usados", condicion: "USADO" },
+];
 
 function ubicacion(v: VendedorPublico): string {
   return [v.direccion, v.ciudad, v.provincia].filter(Boolean).join(", ");
@@ -36,9 +44,12 @@ export async function generateMetadata({ params }: PageProps<"/[slug]">): Promis
 
 export default async function PerfilPublico({ params, searchParams }: PageProps<"/[slug]">) {
   const { slug } = await params;
-  const { contacto } = await searchParams;
+  const { contacto, condicion } = await searchParams;
   const vendedor = await vendedorPublico(slug);
   if (!vendedor) notFound();
+
+  const filtro = FILTROS.find((f) => f.valor === condicion) ?? FILTROS[0];
+  const stock = await stockDeVendedor(vendedor.slug, filtro.condicion);
 
   const esConcesionaria = vendedor.tipo === "CONCESIONARIA";
   const lugar = ubicacion(vendedor);
@@ -124,12 +135,45 @@ export default async function PerfilPublico({ params, searchParams }: PageProps<
       </div>
 
       <section id="stock" aria-labelledby="titulo-stock" className="mx-auto flex w-full max-w-3xl flex-col gap-3.5 px-4 pt-7">
-        <h2 id="titulo-stock" className="font-titulo text-2xl font-extrabold tracking-[-0.6px]">
-          Stock disponible
-        </h2>
-        <p className="rounded-[18px] border border-dashed border-borde-fuerte p-5 text-sm text-secundario">
-          Todavía no hay autos publicados. Volvé a pasar pronto.
-        </p>
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 id="titulo-stock" className="font-titulo text-2xl font-extrabold tracking-[-0.6px]">
+            Stock disponible
+          </h2>
+          <span className="text-sm text-secundario">
+            {stock.total === 1 ? "1 unidad" : `${stock.total} unidades`}
+          </span>
+        </div>
+        <nav aria-label="Filtrar stock" className="flex gap-2">
+          {FILTROS.map((f) => {
+            const activo = f === filtro;
+            return (
+              <Link
+                key={f.texto}
+                href={f.valor ? `/${vendedor.slug}?condicion=${f.valor}#stock` : `/${vendedor.slug}#stock`}
+                aria-current={activo ? "page" : undefined}
+                scroll={false}
+                className={`flex min-h-11 items-center rounded-full border-[1.5px] px-4 text-sm font-semibold no-underline ${
+                  activo ? "border-tinta bg-tinta text-fondo" : "border-borde-fuerte bg-superficie text-tinta"
+                }`}
+              >
+                {f.texto}
+              </Link>
+            );
+          })}
+        </nav>
+        {stock.items.length > 0 ? (
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {stock.items.map((p) => (
+              <li key={p.slug}>
+                <TarjetaStock publicacion={p} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="rounded-[18px] border border-dashed border-borde-fuerte p-5 text-sm text-secundario">
+            {filtro.condicion ? "No hay unidades con este filtro." : "Todavía no hay autos publicados. Volvé a pasar pronto."}
+          </p>
+        )}
       </section>
 
       <footer className="flex justify-center px-4 py-7">

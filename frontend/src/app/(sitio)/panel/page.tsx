@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { BotonLink } from "@/components/ui/Boton";
 import { BotonCopiar } from "@/components/ui/BotonCopiar";
+import { ListaMisPublicaciones } from "@/components/publicaciones/ListaMisPublicaciones";
 import { FormularioPerfil } from "@/components/vendedores/FormularioPerfil";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { urlDelPerfil, urlVisibleDelPerfil } from "@/lib/vendedores/formato";
+import { misPublicaciones } from "@/lib/publicaciones/consultas";
 import { miVendedor } from "@/lib/vendedores/consultas";
 
 export const metadata: Metadata = {
@@ -13,7 +15,7 @@ export const metadata: Metadata = {
 
 export default async function Panel({ searchParams }: PageProps<"/panel">) {
   await exigirUsuario("/panel");
-  const [vendedor, { guardado }] = await Promise.all([miVendedor(), searchParams]);
+  const [vendedor, { guardado, publicacion }] = await Promise.all([miVendedor(), searchParams]);
 
   if (!vendedor) {
     return (
@@ -29,17 +31,32 @@ export default async function Panel({ searchParams }: PageProps<"/panel">) {
     );
   }
 
+  const publicaciones = await misPublicaciones();
+
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 pt-6 pb-16">
+      {publicacion === "guardada" && (
+        <p role="status" className="rounded-2xl bg-celeste p-4 text-sm font-semibold text-confianza-profundo">
+          Guardamos los cambios de la publicación.
+        </p>
+      )}
       {guardado && (
         <p role="status" className="rounded-2xl bg-celeste p-4 text-sm font-semibold text-confianza-profundo">
           {guardado === "alta" ? "¡Listo! Ya creaste tu perfil." : "Guardamos los cambios de tu perfil."}
         </p>
       )}
 
-      <div>
-        <p className="text-sm text-secundario">Hola,</p>
-        <h1 className="font-titulo text-[32px] leading-none font-extrabold tracking-[-1px]">{vendedor.nombrePublico}</h1>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm text-secundario">Hola,</p>
+          <h1 className="font-titulo text-[32px] leading-none font-extrabold tracking-[-1px]">{vendedor.nombrePublico}</h1>
+        </div>
+        <BotonLink href="/panel/publicaciones/nueva" variante="marca" tamano="lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Publicar vehículo
+        </BotonLink>
       </div>
 
       <section
@@ -63,9 +80,17 @@ export default async function Panel({ searchParams }: PageProps<"/panel">) {
         </div>
       </section>
 
-      <section className="rounded-[18px] border border-dashed border-borde-fuerte p-5">
-        <h2 className="font-semibold">Tus publicaciones</h2>
-        <p className="text-sm text-secundario">Muy pronto vas a poder publicar tus autos desde acá.</p>
+      <section aria-labelledby="mis-publicaciones" className="flex flex-col gap-3">
+        <h2 id="mis-publicaciones" className="font-titulo text-2xl font-extrabold tracking-[-0.6px]">
+          Mis publicaciones
+        </h2>
+        {publicaciones.length > 0 ? (
+          <ListaMisPublicaciones publicaciones={publicaciones} />
+        ) : (
+          <p className="rounded-[18px] border border-dashed border-borde-fuerte p-5 text-sm text-secundario">
+            Todavía no publicaste ningún vehículo. Empezá con “Publicar vehículo”.
+          </p>
+        )}
       </section>
     </main>
   );

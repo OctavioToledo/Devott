@@ -89,3 +89,116 @@ export type SlugDisponible = {
   disponible: boolean;
   motivo: string | null;
 };
+
+export type Condicion = "0KM" | "USADO";
+export type Moneda = "ARS" | "USD";
+export type Carroceria =
+  | "SEDAN"
+  | "HATCHBACK"
+  | "SUV"
+  | "PICKUP"
+  | "COUPE"
+  | "CONVERTIBLE"
+  | "RURAL"
+  | "MONOVOLUMEN"
+  | "UTILITARIO";
+export type Combustible = "NAFTA" | "DIESEL" | "GNC" | "HIBRIDO" | "ELECTRICO";
+export type Transmision = "MANUAL" | "AUTOMATICA";
+export type Traccion = "DELANTERA" | "TRASERA" | "4X4" | "AWD";
+export type EstadoPublicacion = "BORRADOR" | "ACTIVA" | "PAUSADA" | "VENDIDA";
+
+/** Cuerpo de POST y PUT /api/v1/me/publicaciones. */
+export type PublicacionRequest = {
+  modeloId: number | null;
+  version: string;
+  anio: number | null;
+  km: number | null;
+  condicion: Condicion | null;
+  precio: number | null;
+  moneda: Moneda;
+  carroceria: Carroceria | null;
+  combustible: Combustible | null;
+  transmision: Transmision | null;
+  traccion: Traccion | null;
+  color: string;
+  puertas: number | null;
+  financia: boolean;
+  aceptaPermuta: boolean;
+  unicoDueno: boolean;
+  descripcion: string;
+  /** null: se usa la ubicación del vendedor. */
+  localidad: { ciudad: string; provincia: string; lat: number; lng: number } | null;
+};
+
+type DatosComunesPublicacion = {
+  slug: string;
+  estado: EstadoPublicacion;
+  titulo: string;
+  modelo: { marcaId: number; marca: string; modeloId: number; modelo: string };
+  version: string | null;
+  anio: number;
+  km: number;
+  condicion: Condicion;
+  precio: number;
+  moneda: Moneda;
+  carroceria: Carroceria | null;
+  combustible: Combustible | null;
+  transmision: Transmision | null;
+  traccion: Traccion | null;
+  color: string | null;
+  puertas: number | null;
+  financia: boolean;
+  aceptaPermuta: boolean;
+  unicoDueno: boolean;
+  descripcion: string | null;
+  publicadaEn: string | null;
+};
+
+/** Respuesta de /api/v1/me/publicaciones. */
+export type MiPublicacion = DatosComunesPublicacion & {
+  id: string;
+  localidad: { ciudad: string | null; provincia: string | null; lat: number | null; lng: number | null };
+  cantidadFotos: number;
+  vendidaEn: string | null;
+  creadaEn: string;
+  actualizadaEn: string;
+};
+
+/** Respuesta de GET /api/v1/publicaciones/{slug}. */
+export type PublicacionPublica = DatosComunesPublicacion & {
+  ciudad: string | null;
+  provincia: string | null;
+  vendedor: {
+    slug: string;
+    nombrePublico: string;
+    tipo: TipoVendedor;
+    verificado: boolean;
+    ciudad: string | null;
+    provincia: string | null;
+  };
+};
+
+/** Resumen para listados (stock del perfil y feed). */
+export type TarjetaPublicacion = {
+  slug: string;
+  estado: EstadoPublicacion;
+  titulo: string;
+  version: string | null;
+  anio: number;
+  km: number;
+  condicion: Condicion;
+  precio: number;
+  moneda: Moneda;
+  financia: boolean;
+  ciudad: string | null;
+  provincia: string | null;
+  cantidadFotos: number;
+};
+
+export type Pagina<T> = {
+  items: T[];
+  pagina: number;
+  tamano: number;
+  total: number;
+  hayMas: boolean;
+};
