@@ -1,7 +1,8 @@
 import "server-only";
+import { cache } from "react";
 import { ErrorApi, pedirApi } from "@/lib/api/cliente";
 import { pedirApiServidor } from "@/lib/api/servidor";
-import type { Condicion, MiPublicacion, Pagina, TarjetaPublicacion } from "@/lib/api/tipos";
+import type { Condicion, MiPublicacion, Pagina, PublicacionPublica, TarjetaPublicacion } from "@/lib/api/tipos";
 import { consultaApi, type FiltrosFeed } from "./busqueda";
 
 export function misPublicaciones(): Promise<MiPublicacion[]> {
@@ -34,3 +35,16 @@ export function stockDeVendedor(
 export function buscarPublicaciones(filtros: FiltrosFeed): Promise<Pagina<TarjetaPublicacion>> {
   return pedirApi<Pagina<TarjetaPublicacion>>(`/publicaciones?${consultaApi(filtros)}`, { revalidar: 60 });
 }
+
+/**
+ * Detalle público (activa o vendida), o null si no existe o no está visible. Se reutiliza un minuto;
+ * al editarla se invalida con revalidatePath. `cache` evita pedirla dos veces (metadatos y página).
+ */
+export const publicacionPublica = cache(async (slug: string): Promise<PublicacionPublica | null> => {
+  try {
+    return await pedirApi<PublicacionPublica>(`/publicaciones/${encodeURIComponent(slug)}`, { revalidar: 60 });
+  } catch (e) {
+    if (e instanceof ErrorApi && e.status === 404) return null;
+    throw e;
+  }
+});
