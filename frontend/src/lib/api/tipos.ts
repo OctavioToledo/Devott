@@ -5,6 +5,8 @@ export type Me = {
   nombre: string | null;
   avatarUrl: string | null;
   creadoEn: string;
+  /** Tiene acceso a /admin. */
+  admin: boolean;
 };
 
 /** Respuesta de GET /api/v1/catalogo/marcas. */
@@ -263,4 +265,51 @@ export type Metricas = {
   anterior: TotalesMetricas;
   serie: MetricasDelDia[];
   publicaciones: MetricasDePublicacion[];
+};
+
+/** Respuesta de GET /api/v1/planes. */
+export type Plan = {
+  codigo: string;
+  nombre: string;
+  maxPublicaciones: number;
+  maxFotos: number;
+  precioArs: number;
+};
+
+export type AvisoPlan = "SIN_PLAN" | "POR_VENCER" | "EN_GRACIA" | "LIMITE_ALCANZADO";
+
+/** Respuesta de GET /api/v1/me/suscripcion. */
+export type MiPlan = {
+  plan: Plan | null;
+  esPrueba: boolean;
+  inicio: string | null;
+  venceEl: string | null;
+  pausaEl: string | null;
+  diasParaVencer: number | null;
+  publicacionesActivas: number;
+  maxPublicaciones: number;
+  maxFotos: number;
+  avisos: AvisoPlan[];
+};
+
+export type SuscripcionAdmin = {
+  plan: string;
+  nombrePlan: string;
+  esPrueba: boolean;
+  inicio: string;
+  venceEl: string;
+  referencia: string | null;
+  enGracia: boolean;
+};
+
+/** Respuesta de /api/v1/admin/vendedores. */
+export type VendedorAdmin = {
+  slug: string;
+  nombrePublico: string;
+  tipo: TipoVendedor;
+  ciudad: string | null;
+  provincia: string | null;
+  email: string | null;
+  publicacionesActivas: number;
+  suscripcion: SuscripcionAdmin | null;
 };

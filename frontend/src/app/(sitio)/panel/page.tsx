@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { BotonLink } from "@/components/ui/Boton";
 import { BotonCopiar } from "@/components/ui/BotonCopiar";
 import { PanelMetricas } from "@/components/metricas/PanelMetricas";
+import { TarjetaPlan } from "@/components/planes/TarjetaPlan";
 import { ListaMisPublicaciones } from "@/components/publicaciones/ListaMisPublicaciones";
 import { FormularioPerfil } from "@/components/vendedores/FormularioPerfil";
 import { ErrorApi } from "@/lib/api/cliente";
 import { pedirApiServidor } from "@/lib/api/servidor";
-import type { Metricas } from "@/lib/api/tipos";
+import type { Metricas, MiPlan } from "@/lib/api/tipos";
 import { exigirUsuario } from "@/lib/auth/sesion";
 import { leerPeriodo } from "@/lib/metricas/formato";
 import { urlDelPerfil, urlVisibleDelPerfil } from "@/lib/vendedores/formato";
@@ -37,8 +38,12 @@ export default async function Panel({ searchParams }: PageProps<"/panel">) {
   }
 
   const periodo = leerPeriodo(dias);
-  const [publicaciones, metricas] = await Promise.all([
+  const [publicaciones, plan, metricas] = await Promise.all([
     misPublicaciones(),
+    pedirApiServidor<MiPlan>("/me/suscripcion").catch((e) => {
+      if (e instanceof ErrorApi) return null;
+      throw e;
+    }),
     pedirApiServidor<Metricas>(`/me/metricas?dias=${periodo}`).catch((e) => {
       if (e instanceof ErrorApi) return null;
       throw e;
@@ -92,6 +97,8 @@ export default async function Panel({ searchParams }: PageProps<"/panel">) {
           </BotonLink>
         </div>
       </section>
+
+      {plan && <TarjetaPlan plan={plan} />}
 
       {metricas ? (
         <PanelMetricas metricas={metricas} periodo={periodo} />
