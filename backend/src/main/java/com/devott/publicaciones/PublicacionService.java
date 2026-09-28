@@ -169,6 +169,24 @@ public class PublicacionService {
         return Pagina.de(page, vistas(page.getContent()));
     }
 
+    /** Id de una publicación visible en público (activa o vendida). Si no, 404. */
+    public UUID idVisible(String slug) {
+        return publicaciones.findBySlug(slug)
+                .filter(p -> p.getEstado().esVisibleEnPublico())
+                .map(Publicacion::getId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe esa publicación o ya no está disponible."));
+    }
+
+    /** Tarjetas de las publicaciones visibles entre `ids`, en el mismo orden. Las que no están visibles se omiten. */
+    public List<PublicacionResponses.Tarjeta> tarjetasVisibles(List<UUID> ids) {
+        Map<UUID, PublicacionVista> porId = vistas(publicaciones.findAllById(ids).stream()
+                        .filter(p -> p.getEstado().esVisibleEnPublico()).toList())
+                .stream().collect(Collectors.toMap(v -> v.publicacion().getId(), v -> v));
+        return ids.stream().filter(porId::containsKey)
+                .map(id -> PublicacionResponses.Tarjeta.de(porId.get(id), almacen))
+                .toList();
+    }
+
     /** Lo necesario para armar el mensaje de WhatsApp de una publicación. */
     public record ParaContacto(UUID publicacionId, UUID vendedorId, String slug, String titulo, String version,
                                int anio, BigDecimal precio, Moneda moneda) {

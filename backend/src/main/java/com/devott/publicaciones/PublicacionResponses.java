@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-final class PublicacionResponses {
+public final class PublicacionResponses {
 
     private PublicacionResponses() {
     }
@@ -141,7 +141,7 @@ final class PublicacionResponses {
 
     /** Resumen para listados: stock del perfil y feed. */
     @Schema(name = "TarjetaPublicacion")
-    record Tarjeta(
+    public record Tarjeta(
             String slug,
             EstadoPublicacion estado,
             String titulo,
