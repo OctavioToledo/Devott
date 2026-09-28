@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ListaFeed } from "@/components/feed/ListaFeed";
+import { RecordarFeed } from "@/components/publicaciones/BotonVolver";
 import { BarraFiltros, BotonFiltros } from "@/components/feed/PanelFiltros";
 import { SelectorOrden } from "@/components/feed/SelectorOrden";
 import { SelectorZona } from "@/components/feed/SelectorZona";
@@ -58,6 +59,7 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-4 pt-4 pb-16">
+      <RecordarFeed url={url} />
       <h1 className="font-titulo max-w-[16ch] text-[32px] leading-[1.02] font-extrabold tracking-[-1.2px] sm:text-5xl">
         {nombreMarca ? `${nombreMarca}${nombreModelo ? ` ${nombreModelo}` : ""} cerca de casa.` : "Encontrá tu próximo auto cerca de casa."}
       </h1>

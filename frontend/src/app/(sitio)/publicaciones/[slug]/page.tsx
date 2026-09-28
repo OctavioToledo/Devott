@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BotonVolver } from "@/components/publicaciones/BotonVolver";
 import { Galeria } from "@/components/publicaciones/Galeria";
+import { TarjetaStock } from "@/components/publicaciones/TarjetaStock";
+import { clasesBoton } from "@/components/ui/boton";
 import { Odometro } from "@/components/publicaciones/Odometro";
 import type { PublicacionPublica, VendedorPublico } from "@/lib/api/tipos";
 import { urlDelSitio } from "@/lib/config";
-import { publicacionPublica } from "@/lib/publicaciones/consultas";
+import { publicacionPublica, stockDeVendedor } from "@/lib/publicaciones/consultas";
 import {
   CARROCERIAS,
   COMBUSTIBLES,
@@ -60,11 +63,16 @@ export async function generateMetadata({ params }: PageProps<"/publicaciones/[sl
   };
 }
 
-export default async function DetallePublicacion({ params }: PageProps<"/publicaciones/[slug]">) {
+export default async function DetallePublicacion({ params, searchParams }: PageProps<"/publicaciones/[slug]">) {
   const { slug } = await params;
+  const { contacto } = await searchParams;
   const p = await publicacionPublica(slug);
   if (!p) notFound();
-  const vendedor = await vendedorPublico(p.vendedor.slug);
+  const [vendedor, stock] = await Promise.all([
+    vendedorPublico(p.vendedor.slug),
+    stockDeVendedor(p.vendedor.slug).catch(() => null),
+  ]);
+  const otros = (stock?.items ?? []).filter((o) => o.slug !== p.slug).slice(0, 4);
 
   const lugar = lugarDe(p);
   const vendida = p.estado === "VENDIDA";
@@ -93,12 +101,7 @@ export default async function DetallePublicacion({ params }: PageProps<"/publica
         dangerouslySetInnerHTML={{ __html: jsonLd(p).replace(/</g, "\\u003c") }}
       />
       <div className="px-4 pt-2 pb-3">
-        <Link href="/" className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-secundario no-underline hover:text-tinta">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M15 5l-7 7 7 7" />
-          </svg>
-          Ver más autos
-        </Link>
+        <BotonVolver />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:px-4">
@@ -168,12 +171,71 @@ export default async function DetallePublicacion({ params }: PageProps<"/publica
                 ))}
               </ul>
             )}
+            {contacto === "error" && (
+              <p role="alert" className="rounded-2xl bg-celeste p-3 text-sm text-confianza-profundo">
+                No pudimos abrir WhatsApp. Probá de nuevo en un rato.
+              </p>
+            )}
+            {vendida ? (
+              <p className="rounded-2xl bg-fondo p-3 text-sm text-secundario">
+                Este auto ya se vendió. Mirá otros de {p.vendedor.nombrePublico} o seguí buscando.
+              </p>
+            ) : (
+              <div className="hidden lg:block">
+                <BotonWhatsapp slug={p.slug} />
+              </div>
+            )}
           </div>
 
           <TarjetaVendedor p={p} vendedor={vendedor} />
         </aside>
       </div>
+
+      {otros.length > 0 && (
+        <section aria-labelledby="titulo-otros" className="mt-10 flex flex-col gap-3.5 px-4">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 id="titulo-otros" className="font-titulo text-[22px] font-extrabold tracking-[-0.5px]">
+              Más de {p.vendedor.nombrePublico}
+            </h2>
+            <Link href={`/${p.vendedor.slug}#stock`} className="shrink-0 text-sm font-semibold text-marca">
+              Ver todo
+            </Link>
+          </div>
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {otros.map((o) => (
+              <li key={o.slug}>
+                <Link href={`/publicaciones/${o.slug}`} className="block no-underline">
+                  <TarjetaStock publicacion={o} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {!vendida && (
+        // En mobile el botón queda fijo abajo, siempre a mano.
+        <div className="fixed inset-x-0 bottom-0 z-20 flex items-center gap-3 border-t border-borde bg-fondo/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
+          <div className="min-w-0">
+            <p className="truncate text-xs text-secundario">{nombreCorto(p)}</p>
+            <p className="font-titulo text-xl leading-tight font-extrabold">{formatoPrecio(p.precio, p.moneda)}</p>
+          </div>
+          <BotonWhatsapp slug={p.slug} className="ml-auto" />
+        </div>
+      )}
     </main>
+  );
+}
+
+/** Pasa por /contacto para registrar el contacto; el número del vendedor no está en el HTML. */
+function BotonWhatsapp({ slug, className = "" }: { slug: string; className?: string }) {
+  return (
+    <a href={`/contacto/publicacion/${slug}`} rel="nofollow" className={clasesBoton("whatsapp", "lg", `font-bold lg:w-full ${className}`)}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M4 20l1.3-3.9A8 8 0 1 1 8 19.2L4 20z" />
+      </svg>
+      Consultar por WhatsApp
+    </a>
   );
 }
 
