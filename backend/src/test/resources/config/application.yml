@@ -10,3 +10,6 @@ devott:
     al-iniciar: false
   metricas:
     purga-cron: "-"
+  suscripciones:
+    vencimiento-cron: "-"
+  admins: admin@devott.test

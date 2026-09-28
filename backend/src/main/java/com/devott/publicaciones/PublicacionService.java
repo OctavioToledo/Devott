@@ -129,6 +129,9 @@ public class PublicacionService {
             throw new ConflictoException("Agregá al menos una foto antes de publicar.");
         }
         Limites limite = limites.de(publicacion.getVendedorId());
+        if (limite.maxPublicaciones() == 0) {
+            throw new ConflictoException("Para publicar necesitás un plan activo. Elegí uno en Planes.");
+        }
         long activas = publicaciones.countByVendedorIdAndEstado(publicacion.getVendedorId(), EstadoPublicacion.ACTIVA);
         if (activas >= limite.maxPublicaciones()) {
             throw new ConflictoException("Llegaste al límite de " + limite.maxPublicaciones()

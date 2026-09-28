@@ -1,25 +1,26 @@
 package com.devott.suscripciones;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
 /**
- * Límites de publicaciones y fotos de cada vendedor. Por ahora todos tienen los mismos,
- * definidos en la configuración; en el paso 10 salen de su suscripción.
+ * Límites de publicaciones y fotos de cada vendedor, según su plan vigente (con los días de gracia).
+ * Sin plan no puede tener publicaciones activas, pero sí preparar borradores con fotos.
  */
 @Service
 public class LimitesService {
 
-    private final Limites porDefecto;
+    /** Sin plan: borradores con tantas fotos como el plan más chico. */
+    public static final Limites SIN_PLAN = new Limites(0, 8);
 
-    LimitesService(@Value("${devott.limites.max-publicaciones}") int maxPublicaciones,
-                   @Value("${devott.limites.max-fotos}") int maxFotos) {
-        this.porDefecto = new Limites(maxPublicaciones, maxFotos);
+    private final SuscripcionService suscripciones;
+
+    LimitesService(SuscripcionService suscripciones) {
+        this.suscripciones = suscripciones;
     }
 
     public Limites de(UUID vendedorId) {
-        return porDefecto;
+        return suscripciones.vigente(vendedorId).map(s -> s.plan().limites()).orElse(SIN_PLAN);
     }
 }

@@ -34,4 +34,10 @@ interface PublicacionRepository extends JpaRepository<Publicacion, UUID> {
             WHERE moneda = 'ARS' AND precio_usd_ref IS DISTINCT FROM round(precio / :dolar, 2)
             """, nativeQuery = true)
     int recalcularPreciosUsd(BigDecimal dolar);
+
+    /** Pausa todas las activas del vendedor (se quedó sin plan). */
+    @Modifying
+    @Query(value = "UPDATE publicacion SET estado = 'PAUSADA', actualizada_en = now() WHERE vendedor_id = :vendedorId AND estado = 'ACTIVA'",
+            nativeQuery = true)
+    int pausarActivas(UUID vendedorId);
 }

@@ -54,10 +54,11 @@ devott:
     bucket: ${SUPABASE_BUCKET:fotos}
     local:
       directorio: ${ALMACENAMIENTO_LOCAL_DIR:./almacenamiento-local}
-  limites:
-    # Límites para todos los vendedores hasta que existan los planes (paso 10).
-    max-publicaciones: ${DEVOTT_MAX_PUBLICACIONES:50}
-    max-fotos: ${DEVOTT_MAX_FOTOS:20}
+  # Emails con acceso a la administración (planes y suscripciones), separados por coma.
+  admins: ${DEVOTT_ADMINS:}
+  suscripciones:
+    # Todos los días: vence las suscripciones pasada la gracia y pausa sus publicaciones.
+    vencimiento-cron: ${DEVOTT_VENCIMIENTO_CRON:0 15 3 * * *}
   cotizaciones:
     url: ${DOLARAPI_URL:https://dolarapi.com}
     # Cada 3 horas, hora argentina. "-" desactiva la actualización periódica.
