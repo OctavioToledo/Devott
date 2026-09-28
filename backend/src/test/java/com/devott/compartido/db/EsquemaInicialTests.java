@@ -22,7 +22,7 @@ class EsquemaInicialTests {
 
     static final List<String> TABLAS = List.of(
             "usuario", "vendedor", "plan", "suscripcion", "marca", "modelo", "publicacion", "foto",
-            "guardado", "seguimiento", "contacto", "resena", "metrica_diaria", "cotizacion");
+            "guardado", "seguimiento", "contacto", "resena", "metrica_diaria", "cotizacion", "vista_registrada");
 
     @Autowired
     JdbcTemplate jdbc;

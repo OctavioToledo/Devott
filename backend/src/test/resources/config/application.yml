@@ -8,3 +8,5 @@ devott:
   cotizaciones:
     cron: "-"
     al-iniciar: false
+  metricas:
+    purga-cron: "-"
