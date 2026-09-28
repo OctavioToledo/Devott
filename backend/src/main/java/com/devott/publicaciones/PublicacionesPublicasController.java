@@ -9,8 +9,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -32,6 +34,14 @@ class PublicacionesPublicasController {
         this.publicaciones = publicaciones;
         this.vendedores = vendedores;
         this.almacen = almacen;
+    }
+
+    @GetMapping("/api/v1/publicaciones")
+    @Operation(summary = "Feed de publicaciones activas con filtros",
+            description = "Los filtros de precio usan el precio de referencia en dólares; la respuesta muestra el "
+                    + "precio y la moneda originales. Con lat, lng y radioKm busca por zona e informa la distancia.")
+    Pagina<Tarjeta> buscar(@ParameterObject @Valid FiltrosBusqueda filtros) {
+        return publicaciones.buscar(filtros).map(e -> Tarjeta.de(e, almacen));
     }
 
     @GetMapping("/api/v1/publicaciones/{slug}")

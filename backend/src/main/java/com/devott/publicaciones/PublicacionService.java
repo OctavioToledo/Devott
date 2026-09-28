@@ -6,6 +6,7 @@ import com.devott.compartido.almacenamiento.AlmacenDeArchivos;
 import com.devott.compartido.errores.ConflictoException;
 import com.devott.compartido.errores.DatosInvalidosException;
 import com.devott.compartido.errores.RecursoNoEncontradoException;
+import com.devott.compartido.errores.ServicioNoDisponibleException;
 import com.devott.compartido.texto.Slugs;
 import com.devott.compartido.web.Pagina;
 import com.devott.cotizaciones.CotizacionService;
@@ -50,6 +51,7 @@ public class PublicacionService {
 
     private final PublicacionRepository publicaciones;
     private final FotoRepository fotos;
+    private final BuscadorPublicaciones buscador;
     private final VendedorService vendedores;
     private final CatalogoService catalogo;
     private final LimitesService limites;
@@ -57,11 +59,13 @@ public class PublicacionService {
     private final CotizacionService cotizaciones;
     private final Clock reloj;
 
-    PublicacionService(PublicacionRepository publicaciones, FotoRepository fotos, VendedorService vendedores,
+    PublicacionService(PublicacionRepository publicaciones, FotoRepository fotos, BuscadorPublicaciones buscador,
+                       VendedorService vendedores,
                        CatalogoService catalogo, LimitesService limites, AlmacenDeArchivos almacen,
                        CotizacionService cotizaciones, Clock reloj) {
         this.publicaciones = publicaciones;
         this.fotos = fotos;
+        this.buscador = buscador;
         this.vendedores = vendedores;
         this.catalogo = catalogo;
         this.limites = limites;
@@ -163,6 +167,51 @@ public class PublicacionService {
                 EstadoPublicacion.ACTIVA, condiciones,
                 PageRequest.of(pagina, tamano, Sort.by(Sort.Direction.DESC, "publicadaEn")));
         return Pagina.de(page, vistas(page.getContent()));
+    }
+
+    /** Resultado del feed: la publicación y, si se buscó por zona, a cuántos km está. */
+    public record Encontrada(PublicacionVista vista, Double distanciaKm) {
+    }
+
+    /** Feed: publicaciones activas que cumplen los filtros. */
+    public Pagina<Encontrada> buscar(FiltrosBusqueda f) {
+        validar(f);
+        BigDecimal dolar = f.moneda() == Moneda.ARS && (f.precioMin() != null || f.precioMax() != null)
+                ? cotizaciones.dolarDeReferencia().orElseThrow(() -> new ServicioNoDisponibleException(
+                        "Todavía no podemos filtrar por precio en pesos. Probá en dólares.", null))
+                : null;
+        BuscadorPublicaciones.Resultado resultado = buscador.buscar(f,
+                f.precioMin() == null ? null : PreciosUsd.calcular(f.precioMin(), f.moneda(), dolar),
+                f.precioMax() == null ? null : PreciosUsd.calcular(f.precioMax(), f.moneda(), dolar));
+
+        List<UUID> ids = resultado.coincidencias().stream().map(BuscadorPublicaciones.Coincidencia::id).toList();
+        Map<UUID, PublicacionVista> vistas = vistas(publicaciones.findAllById(ids)).stream()
+                .collect(Collectors.toMap(v -> v.publicacion().getId(), v -> v));
+        List<Encontrada> items = resultado.coincidencias().stream()
+                .filter(c -> vistas.containsKey(c.id()))
+                .map(c -> new Encontrada(vistas.get(c.id()), c.distanciaKm()))
+                .toList();
+        long hasta = (long) f.pagina() * f.tamano() + items.size();
+        return new Pagina<>(items, f.pagina(), f.tamano(), resultado.total(), hasta < resultado.total());
+    }
+
+    private static void validar(FiltrosBusqueda f) {
+        boolean algoDeZona = f.lat() != null || f.lng() != null || f.radioKm() != null;
+        if (algoDeZona && !f.porZona()) {
+            throw new DatosInvalidosException("radioKm", "Para buscar por zona hacen falta lat, lng y radioKm.");
+        }
+        if (f.orden() == OrdenBusqueda.CERCANIA && !f.porZona()) {
+            throw new DatosInvalidosException("orden", "Para ordenar por cercanía elegí una zona.");
+        }
+        if (f.modelo() != null && f.marca() == null) {
+            throw new DatosInvalidosException("modelo", "Para filtrar por modelo elegí también la marca.");
+        }
+        if (f.precioMin() != null && f.precioMax() != null && f.precioMin().compareTo(f.precioMax()) > 0) {
+            throw new DatosInvalidosException("precioMax", "El precio máximo no puede ser menor que el mínimo.");
+        }
+        if (f.anioMin() != null && f.anioMax() != null && f.anioMin() > f.anioMax()) {
+            throw new DatosInvalidosException("anioMax", "El año máximo no puede ser menor que el mínimo.");
+        }
     }
 
     // Auxiliares -------------------------------------------------------------

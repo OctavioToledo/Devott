@@ -91,7 +91,7 @@ public class ManejadorErrores extends ResponseEntityExceptionHandler {
         List<ErrorDeCampo> errores = ex.getBindingResult().getAllErrors().stream()
                 .map(e -> new ErrorDeCampo(
                         e instanceof FieldError fe ? fe.getField() : e.getObjectName(),
-                        e.getDefaultMessage()))
+                        e instanceof FieldError fe && fe.isBindingFailure() ? "Valor inválido." : e.getDefaultMessage()))
                 .toList();
         return ResponseEntity.badRequest().body(datosInvalidos(errores));
     }

@@ -139,7 +139,7 @@ final class PublicacionResponses {
         }
     }
 
-    /** Resumen para listados: stock del perfil y, más adelante, el feed. */
+    /** Resumen para listados: stock del perfil y feed. */
     @Schema(name = "TarjetaPublicacion")
     record Tarjeta(
             String slug,
@@ -155,14 +155,22 @@ final class PublicacionResponses {
             String ciudad,
             String provincia,
             @Schema(description = "URL de la primera foto, o null si no tiene") String portada,
-            int cantidadFotos) {
+            int cantidadFotos,
+            @Schema(description = "Distancia en km al centro de la búsqueda. Solo si se buscó por zona") Double distanciaKm) {
+
+        static Tarjeta de(PublicacionService.Encontrada e, AlmacenDeArchivos almacen) {
+            Tarjeta t = de(e.vista(), almacen);
+            Double km = e.distanciaKm() == null ? null : Math.round(e.distanciaKm() * 10) / 10.0;
+            return new Tarjeta(t.slug(), t.estado(), t.titulo(), t.version(), t.anio(), t.km(), t.condicion(),
+                    t.precio(), t.moneda(), t.financia(), t.ciudad(), t.provincia(), t.portada(), t.cantidadFotos(), km);
+        }
 
         static Tarjeta de(PublicacionVista v, AlmacenDeArchivos almacen) {
             Publicacion p = v.publicacion();
             String portada = v.fotos().isEmpty() ? null : almacen.urlPublica(v.fotos().getFirst().getStoragePath());
             return new Tarjeta(p.getSlug(), p.getEstado(), v.modelo().titulo(), p.getVersion(), p.getAnio(),
                     p.getKm(), p.getCondicion(), p.getPrecio(), p.getMoneda(), p.isFinancia(), p.getCiudad(),
-                    p.getProvincia(), portada, v.fotos().size());
+                    p.getProvincia(), portada, v.fotos().size(), null);
         }
     }
 }
