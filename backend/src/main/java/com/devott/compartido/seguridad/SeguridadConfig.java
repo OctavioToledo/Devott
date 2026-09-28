@@ -43,7 +43,8 @@ public class SeguridadConfig {
                                 "/api/v1/vendedores/**",
                                 "/api/v1/catalogo/**",
                                 "/api/v1/ubicaciones/**",
-                                "/api/v1/contacto/**").permitAll()
+                                "/api/v1/contacto/**",
+                                "/api/v1/planes").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/eventos/vista").permitAll()
                         // Almacenamiento local (solo desarrollo): lectura pública, subida con URL firmada.
                         .requestMatchers(HttpMethod.GET, "/almacenamiento-local/**").permitAll()
