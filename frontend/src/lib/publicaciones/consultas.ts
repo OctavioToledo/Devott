@@ -2,6 +2,7 @@ import "server-only";
 import { ErrorApi, pedirApi } from "@/lib/api/cliente";
 import { pedirApiServidor } from "@/lib/api/servidor";
 import type { Condicion, MiPublicacion, Pagina, TarjetaPublicacion } from "@/lib/api/tipos";
+import { consultaApi, type FiltrosFeed } from "./busqueda";
 
 export function misPublicaciones(): Promise<MiPublicacion[]> {
   return pedirApiServidor<MiPublicacion[]>("/me/publicaciones");
@@ -27,4 +28,9 @@ export function stockDeVendedor(
   return pedirApi<Pagina<TarjetaPublicacion>>(`/vendedores/${encodeURIComponent(slug)}/publicaciones?${params}`, {
     revalidar: 60,
   });
+}
+
+/** Primera página del feed. Se reutiliza un minuto: es la misma para todos con los mismos filtros. */
+export function buscarPublicaciones(filtros: FiltrosFeed): Promise<Pagina<TarjetaPublicacion>> {
+  return pedirApi<Pagina<TarjetaPublicacion>>(`/publicaciones?${consultaApi(filtros)}`, { revalidar: 60 });
 }

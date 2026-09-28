@@ -217,7 +217,11 @@ export type TarjetaPublicacion = {
   /** URL de la primera foto, o null si no tiene. */
   portada: string | null;
   cantidadFotos: number;
+  /** Distancia en km al centro de la búsqueda. Solo en el feed, si se buscó por zona. */
+  distanciaKm?: number | null;
 };
+
+export type OrdenBusqueda = "RECIENTES" | "PRECIO_ASC" | "PRECIO_DESC" | "KM_ASC" | "ANIO_DESC" | "CERCANIA";
 
 export type Pagina<T> = {
   items: T[];
