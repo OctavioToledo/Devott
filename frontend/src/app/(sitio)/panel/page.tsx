@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import { BotonLink } from "@/components/ui/Boton";
 import { BotonCopiar } from "@/components/ui/BotonCopiar";
+import { PanelMetricas } from "@/components/metricas/PanelMetricas";
 import { ListaMisPublicaciones } from "@/components/publicaciones/ListaMisPublicaciones";
 import { FormularioPerfil } from "@/components/vendedores/FormularioPerfil";
+import { ErrorApi } from "@/lib/api/cliente";
+import { pedirApiServidor } from "@/lib/api/servidor";
+import type { Metricas } from "@/lib/api/tipos";
 import { exigirUsuario } from "@/lib/auth/sesion";
+import { leerPeriodo } from "@/lib/metricas/formato";
 import { urlDelPerfil, urlVisibleDelPerfil } from "@/lib/vendedores/formato";
 import { misPublicaciones } from "@/lib/publicaciones/consultas";
 import { miVendedor } from "@/lib/vendedores/consultas";
@@ -15,7 +20,7 @@ export const metadata: Metadata = {
 
 export default async function Panel({ searchParams }: PageProps<"/panel">) {
   await exigirUsuario("/panel");
-  const [vendedor, { guardado, publicacion }] = await Promise.all([miVendedor(), searchParams]);
+  const [vendedor, { guardado, publicacion, dias }] = await Promise.all([miVendedor(), searchParams]);
 
   if (!vendedor) {
     return (
@@ -31,7 +36,15 @@ export default async function Panel({ searchParams }: PageProps<"/panel">) {
     );
   }
 
-  const publicaciones = await misPublicaciones();
+  const periodo = leerPeriodo(dias);
+  const [publicaciones, metricas] = await Promise.all([
+    misPublicaciones(),
+    pedirApiServidor<Metricas>(`/me/metricas?dias=${periodo}`).catch((e) => {
+      if (e instanceof ErrorApi) return null;
+      throw e;
+    }),
+  ]);
+  const porPublicacion = Object.fromEntries((metricas?.publicaciones ?? []).map((m) => [m.id, m]));
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 pt-6 pb-16">
@@ -80,12 +93,20 @@ export default async function Panel({ searchParams }: PageProps<"/panel">) {
         </div>
       </section>
 
+      {metricas ? (
+        <PanelMetricas metricas={metricas} periodo={periodo} />
+      ) : (
+        <p role="alert" className="rounded-2xl bg-celeste p-4 text-sm text-confianza-profundo">
+          No pudimos cargar tus métricas. Probá de nuevo en un rato.
+        </p>
+      )}
+
       <section aria-labelledby="mis-publicaciones" className="flex flex-col gap-3">
         <h2 id="mis-publicaciones" className="font-titulo text-2xl font-extrabold tracking-[-0.6px]">
           Mis publicaciones
         </h2>
         {publicaciones.length > 0 ? (
-          <ListaMisPublicaciones publicaciones={publicaciones} />
+          <ListaMisPublicaciones publicaciones={publicaciones} metricas={porPublicacion} dias={periodo} />
         ) : (
           <p className="rounded-[18px] border border-dashed border-borde-fuerte p-5 text-sm text-secundario">
             Todavía no publicaste ningún vehículo. Empezá con “Publicar vehículo”.

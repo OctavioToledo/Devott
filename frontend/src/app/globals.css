@@ -26,6 +26,8 @@
   --color-confianza: #1e4f8a;
   --color-celeste: #dcebf7;
   --color-confianza-profundo: #173a66;
+  /* Barras y líneas de los gráficos del panel: azul confianza dentro de la banda de luminosidad validada. */
+  --color-grafico: #2f5f9e;
 
   --font-sans: var(--font-figtree), system-ui, sans-serif;
   --font-titulo: var(--font-bricolage), var(--font-figtree), sans-serif;

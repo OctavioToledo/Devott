@@ -242,3 +242,25 @@ export type VendedorSeguido = {
   provincia: string | null;
   autosActivos: number;
 };
+
+/** Respuesta de GET /api/v1/me/metricas. */
+export type TotalesMetricas = {
+  vistasPerfil: number;
+  vistasPublicaciones: number;
+  contactos: number;
+  guardados: number;
+};
+
+export type MetricasDelDia = TotalesMetricas & { fecha: string };
+
+export type MetricasDePublicacion = { id: string; vistas: number; contactos: number; guardados: number };
+
+export type Metricas = {
+  dias: number;
+  desde: string;
+  hasta: string;
+  actual: TotalesMetricas;
+  anterior: TotalesMetricas;
+  serie: MetricasDelDia[];
+  publicaciones: MetricasDePublicacion[];
+};
