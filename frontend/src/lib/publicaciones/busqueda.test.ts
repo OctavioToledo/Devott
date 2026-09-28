@@ -3,6 +3,8 @@ import {
   cantidadDeFiltros,
   consultaApi,
   FILTROS_VACIOS,
+  filtrosActivos,
+  sinFiltros,
   formatoDistancia,
   leerFiltros,
   urlDelFeed,
@@ -109,3 +111,43 @@ it("formatoDistancia redondea", () => {
 function filtrosCon(cambios: Partial<typeof FILTROS_VACIOS>) {
   return { ...FILTROS_VACIOS, ...cambios };
 }
+
+describe("filtrosActivos", () => {
+  it("arma un chip por filtro con el texto y los filtros sin él", () => {
+    const f = filtrosCon({
+      marca: "toyota",
+      modelo: "hilux",
+      precioMin: 10000,
+      moneda: "USD",
+      anioMin: 2015,
+      anioMax: 2020,
+      kmMax: 100000,
+      carroceria: ["SUV", "PICKUP"],
+      financia: true,
+    });
+    const chips = filtrosActivos(f, { marca: "Toyota", modelo: "Hilux" });
+    expect(chips.map((c) => c.texto)).toEqual([
+      "Toyota",
+      "Hilux",
+      "Desde US$ 10.000",
+      "2015 a 2020",
+      "Hasta 100.000 km",
+      "SUV",
+      "Pickup",
+      "Financia",
+    ]);
+    expect(chips[0].sin).toMatchObject({ marca: null, modelo: null });
+    expect(chips[5].sin.carroceria).toEqual(["PICKUP"]);
+  });
+
+  it("precio en pesos y solo con máximo", () => {
+    expect(filtrosActivos(filtrosCon({ precioMax: 30000000, moneda: "ARS" }))[0].texto).toBe("Hasta $ 30.000.000");
+  });
+
+  it("sinFiltros conserva zona y orden", () => {
+    const zona = { nombre: "x", lat: 1, lng: 2, radioKm: 25 };
+    expect(sinFiltros(filtrosCon({ zona, orden: "KM_ASC", financia: true }))).toEqual(
+      filtrosCon({ zona, orden: "KM_ASC" }),
+    );
+  });
+});

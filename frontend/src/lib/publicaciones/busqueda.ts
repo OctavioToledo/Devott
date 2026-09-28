@@ -7,7 +7,7 @@ import type {
   TipoVendedor,
   Transmision,
 } from "@/lib/api/tipos";
-import { CARROCERIAS, COMBUSTIBLES, TRANSMISIONES } from "./etiquetas";
+import { CARROCERIAS, COMBUSTIBLES, formatoKm, formatoPrecio, TRANSMISIONES } from "./etiquetas";
 
 export type Zona = { nombre: string; lat: number; lng: number; radioKm: number };
 
@@ -215,4 +215,52 @@ export function cantidadDeFiltros(f: FiltrosFeed): number {
 export function formatoDistancia(km: number): string {
   if (km < 1) return "a menos de 1 km";
   return `a ${km < 10 ? km.toFixed(1).replace(".", ",").replace(",0", "") : Math.round(km)} km`;
+}
+
+export type FiltroActivo = { clave: string; texto: string; sin: FiltrosFeed };
+
+/**
+ * Filtros aplicados como chips que se pueden quitar de a uno. `sin` son los filtros sin ese chip.
+ * No incluye zona, condición ni orden, que tienen sus propios controles.
+ */
+export function filtrosActivos(f: FiltrosFeed, nombres: { marca?: string; modelo?: string } = {}): FiltroActivo[] {
+  const chips: FiltroActivo[] = [];
+  const agregar = (clave: string, texto: string, cambios: Partial<FiltrosFeed>) =>
+    chips.push({ clave, texto, sin: { ...f, ...cambios } });
+
+  if (f.tipoVendedor) {
+    agregar("tipoVendedor", f.tipoVendedor === "CONCESIONARIA" ? "Concesionarias" : "Particulares", { tipoVendedor: null });
+  }
+  if (f.marca) agregar("marca", nombres.marca ?? f.marca, { marca: null, modelo: null });
+  if (f.marca && f.modelo) agregar("modelo", nombres.modelo ?? f.modelo, { modelo: null });
+  if (f.precioMin !== null || f.precioMax !== null) {
+    agregar("precio", rango(f.precioMin, f.precioMax, (n) => formatoPrecio(n, f.moneda)), { precioMin: null, precioMax: null });
+  }
+  if (f.anioMin !== null || f.anioMax !== null) {
+    agregar("anio", rango(f.anioMin, f.anioMax, String), { anioMin: null, anioMax: null });
+  }
+  if (f.kmMax !== null) agregar("kmMax", `Hasta ${formatoKm(f.kmMax)} km`, { kmMax: null });
+  for (const c of f.carroceria) {
+    agregar(`carroceria-${c}`, CARROCERIAS[c], { carroceria: f.carroceria.filter((x) => x !== c) });
+  }
+  for (const c of f.combustible) {
+    agregar(`combustible-${c}`, COMBUSTIBLES[c], { combustible: f.combustible.filter((x) => x !== c) });
+  }
+  for (const t of f.transmision) {
+    agregar(`transmision-${t}`, TRANSMISIONES[t], { transmision: f.transmision.filter((x) => x !== t) });
+  }
+  if (f.financia) agregar("financia", "Financia", { financia: false });
+  if (f.permuta) agregar("permuta", "Acepta permuta", { permuta: false });
+  if (f.unicoDueno) agregar("unicoDueno", "Único dueño", { unicoDueno: false });
+  return chips;
+}
+
+function rango(min: number | null, max: number | null, formato: (n: number) => string): string {
+  if (min !== null && max !== null) return `${formato(min)} a ${formato(max)}`;
+  return min !== null ? `Desde ${formato(min)}` : `Hasta ${formato(max as number)}`;
+}
+
+/** Los filtros del panel vuelven a cero; se mantienen la zona y el orden. */
+export function sinFiltros(f: FiltrosFeed): FiltrosFeed {
+  return { ...FILTROS_VACIOS, zona: f.zona, orden: f.orden };
 }
