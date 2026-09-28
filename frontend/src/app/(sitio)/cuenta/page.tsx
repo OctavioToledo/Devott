@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { Boton } from "@/components/ui/Boton";
 import { cerrarSesion } from "@/lib/auth/acciones";
 import { exigirUsuario } from "@/lib/auth/sesion";
@@ -49,6 +50,12 @@ export default async function Cuenta() {
         <p role="alert" className="rounded-2xl bg-celeste p-4 text-sm text-confianza-profundo">
           No pudimos cargar tus datos. {error}
         </p>
+      )}
+
+      {me?.admin && (
+        <Link href="/admin" className="rounded-[18px] border border-borde bg-superficie p-4 font-semibold no-underline hover:border-tinta">
+          Administración de planes →
+        </Link>
       )}
 
       <form action={cerrarSesion}>

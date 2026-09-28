@@ -70,8 +70,9 @@ export function TarjetaPlan({ plan: p }: { plan: MiPlan }) {
           )}
           {porVencer && p.venceEl && (
             <Aviso>
-              {p.esPrueba ? "Tu prueba termina" : "Tu plan vence"} el {fechaDelPlan(p.venceEl)}. Renovalo para que tus
-              autos sigan publicados.
+              {p.esPrueba
+                ? `Tu prueba termina el ${fechaDelPlan(p.venceEl)}. Elegí un plan para que tus autos sigan publicados.`
+                : `Tu plan vence el ${fechaDelPlan(p.venceEl)}. Renovalo para que tus autos sigan publicados.`}
             </Aviso>
           )}
           {enLimite && <Aviso>Llegaste al máximo de autos de tu plan. Para publicar más, pasate a uno más grande.</Aviso>}
