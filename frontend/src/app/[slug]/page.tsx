@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { clasesBoton } from "@/components/ui/boton";
 import { BotonCopiar } from "@/components/ui/BotonCopiar";
 import { BotonSeguir } from "@/components/interacciones/BotonSeguir";
+import { RegistrarVista } from "@/components/metricas/RegistrarVista";
 import { usuarioActual } from "@/lib/auth/sesion";
 import { slugsSeguidos } from "@/lib/interacciones/consultas";
 import { TarjetaStock } from "@/components/publicaciones/TarjetaStock";
@@ -66,6 +67,7 @@ export default async function PerfilPublico({ params, searchParams }: PageProps<
 
   return (
     <main className="flex flex-1 flex-col">
+      {propio?.slug !== vendedor.slug && <RegistrarVista tipo="VISTA_PERFIL" slug={vendedor.slug} />}
       <div className="bg-confianza-profundo">
         <div className="mx-auto flex h-[150px] w-full max-w-3xl items-start justify-between gap-3 px-4 pt-3.5">
           <Logo tono="claro" className="text-[22px]" />

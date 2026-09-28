@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BotonGuardar } from "@/components/interacciones/BotonGuardar";
 import { BotonSeguir } from "@/components/interacciones/BotonSeguir";
+import { RegistrarVista } from "@/components/metricas/RegistrarVista";
 import { BotonVolver } from "@/components/publicaciones/BotonVolver";
 import { Galeria } from "@/components/publicaciones/Galeria";
 import { TarjetaStock } from "@/components/publicaciones/TarjetaStock";
@@ -115,6 +116,8 @@ export default async function DetallePublicacion({ params, searchParams }: PageP
         // Datos estructurados para buscadores (schema.org/Car). Solo texto de la API, escapado por JSON.
         dangerouslySetInnerHTML={{ __html: jsonLd(p).replace(/</g, "\\u003c") }}
       />
+      {/* Las vistas del propio vendedor no cuentan. */}
+      {!vendida && !sesion.esPropio && <RegistrarVista tipo="VISTA_PUBLICACION" slug={p.slug} />}
       <div className="px-4 pt-2 pb-3">
         <BotonVolver />
       </div>
