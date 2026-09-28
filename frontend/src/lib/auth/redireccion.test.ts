@@ -20,6 +20,10 @@ describe("destinoSeguro", () => {
 });
 
 describe("esRutaPrivada", () => {
+  it("guardados es privada", () => {
+    expect(esRutaPrivada("/guardados")).toBe(true);
+  });
+
   it("reconoce las rutas privadas y sus subrutas", () => {
     expect(esRutaPrivada("/cuenta")).toBe(true);
     expect(esRutaPrivada("/panel/publicaciones")).toBe(true);

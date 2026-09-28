@@ -40,7 +40,7 @@ export function TarjetaFeed({
         )}
         <div className="absolute top-2.5 left-2.5 flex gap-1.5">
           <span className="rounded-md bg-tinta px-2 py-1 text-[11px] font-bold text-fondo">
-            {CONDICIONES[p.condicion].toUpperCase()}
+            {p.estado === "VENDIDA" ? "VENDIDO" : CONDICIONES[p.condicion].toUpperCase()}
           </span>
           {p.financia && (
             <span className="rounded-md bg-celeste px-2 py-1 text-[11px] font-bold text-confianza-profundo">
@@ -58,7 +58,11 @@ export function TarjetaFeed({
         )}
       </div>
       <div className="flex flex-1 flex-col gap-1.5 px-3.5 pt-3 pb-3.5">
-        <p className="font-titulo text-[22px] leading-none font-extrabold tracking-[-0.5px]">
+        <p
+          className={`font-titulo text-[22px] leading-none font-extrabold tracking-[-0.5px] ${
+            p.estado === "VENDIDA" ? "text-secundario line-through" : ""
+          }`}
+        >
           {formatoPrecio(p.precio, p.moneda)}
         </p>
         <h3 className="text-base leading-snug font-bold">

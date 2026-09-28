@@ -1,5 +1,5 @@
 /** Rutas que exigen sesión. El proxy manda a /ingresar a quien entre sin estar logueado. */
-export const RUTAS_PRIVADAS = ["/cuenta", "/panel"];
+export const RUTAS_PRIVADAS = ["/cuenta", "/panel", "/guardados"];
 
 export function esRutaPrivada(ruta: string): boolean {
   return RUTAS_PRIVADAS.some((privada) => ruta === privada || ruta.startsWith(`${privada}/`));
