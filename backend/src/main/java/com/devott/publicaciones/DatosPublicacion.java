@@ -15,6 +15,7 @@ record DatosPublicacion(
         Condicion condicion,
         BigDecimal precio,
         Moneda moneda,
+        BigDecimal precioUsdRef,
         Carroceria carroceria,
         Combustible combustible,
         Transmision transmision,

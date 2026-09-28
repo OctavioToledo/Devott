@@ -4,3 +4,7 @@ devott:
     tipo: local
     local:
       directorio: target/almacenamiento-tests
+  # Sin llamadas a dolarapi.com en los tests: se corre a mano cuando hace falta.
+  cotizaciones:
+    cron: "-"
+    al-iniciar: false

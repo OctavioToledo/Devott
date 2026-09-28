@@ -8,6 +8,7 @@ import com.devott.compartido.errores.DatosInvalidosException;
 import com.devott.compartido.errores.RecursoNoEncontradoException;
 import com.devott.compartido.texto.Slugs;
 import com.devott.compartido.web.Pagina;
+import com.devott.cotizaciones.CotizacionService;
 import com.devott.suscripciones.Limites;
 import com.devott.suscripciones.LimitesService;
 import com.devott.vendedores.Vendedor;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Instant;
@@ -52,16 +54,19 @@ public class PublicacionService {
     private final CatalogoService catalogo;
     private final LimitesService limites;
     private final AlmacenDeArchivos almacen;
+    private final CotizacionService cotizaciones;
     private final Clock reloj;
 
     PublicacionService(PublicacionRepository publicaciones, FotoRepository fotos, VendedorService vendedores,
-                       CatalogoService catalogo, LimitesService limites, AlmacenDeArchivos almacen, Clock reloj) {
+                       CatalogoService catalogo, LimitesService limites, AlmacenDeArchivos almacen,
+                       CotizacionService cotizaciones, Clock reloj) {
         this.publicaciones = publicaciones;
         this.fotos = fotos;
         this.vendedores = vendedores;
         this.catalogo = catalogo;
         this.limites = limites;
         this.almacen = almacen;
+        this.cotizaciones = cotizaciones;
         this.reloj = reloj;
     }
 
@@ -134,6 +139,12 @@ public class PublicacionService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("No existe esa publicación."));
     }
 
+    /** Recalcula el precio en dólares de las publicaciones en pesos. Devuelve cuántas cambiaron. */
+    @Transactional
+    public int recalcularPreciosUsd(BigDecimal dolar) {
+        return publicaciones.recalcularPreciosUsd(dolar);
+    }
+
     // Públicas ---------------------------------------------------------------
 
     /** Publicación visible por su link: activa o vendida. */
@@ -203,6 +214,7 @@ public class PublicacionService {
                 r.condicion(),
                 r.precio(),
                 r.moneda(),
+                PreciosUsd.calcular(r.precio(), r.moneda(), dolar(r.moneda())),
                 r.carroceria(),
                 r.combustible(),
                 r.transmision(),
@@ -216,6 +228,10 @@ public class PublicacionService {
                 ciudad,
                 provincia,
                 ubicacion);
+    }
+
+    private BigDecimal dolar(Moneda moneda) {
+        return moneda == Moneda.USD ? null : cotizaciones.dolarDeReferencia().orElse(null);
     }
 
     /** "toyota-hilux-2021-k3f9x2": legible y con un sufijo al azar para que no se repita. */

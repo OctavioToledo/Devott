@@ -47,7 +47,7 @@ public class Publicacion {
     @Enumerated(EnumType.STRING)
     private Moneda moneda;
 
-    /** Precio en dólares para filtrar y ordenar. En ARS se calcula con la cotización (paso 6). */
+    /** Precio en dólares para filtrar y ordenar. En ARS se calcula con la cotización de referencia. */
     @Column(name = "precio_usd_ref")
     private BigDecimal precioUsdRef;
 
@@ -117,7 +117,7 @@ public class Publicacion {
         this.condicion = datos.condicion();
         this.precio = datos.precio();
         this.moneda = datos.moneda();
-        this.precioUsdRef = datos.moneda() == Moneda.USD ? datos.precio() : null;
+        this.precioUsdRef = datos.precioUsdRef();
         this.carroceria = datos.carroceria();
         this.combustible = datos.combustible();
         this.transmision = datos.transmision();

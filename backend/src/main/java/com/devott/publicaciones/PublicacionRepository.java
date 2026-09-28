@@ -3,7 +3,10 @@ package com.devott.publicaciones;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -23,4 +26,12 @@ interface PublicacionRepository extends JpaRepository<Publicacion, UUID> {
 
     Page<Publicacion> findByVendedorIdAndEstadoAndCondicionIn(UUID vendedorId, EstadoPublicacion estado,
                                                               Collection<Condicion> condiciones, Pageable pagina);
+
+    /** No toca actualizada_en: el cambio de cotización no es una edición del vendedor. */
+    @Modifying
+    @Query(value = """
+            UPDATE publicacion SET precio_usd_ref = round(precio / :dolar, 2)
+            WHERE moneda = 'ARS' AND precio_usd_ref IS DISTINCT FROM round(precio / :dolar, 2)
+            """, nativeQuery = true)
+    int recalcularPreciosUsd(BigDecimal dolar);
 }
