@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+
 @RestController
 @RequestMapping("/api/v1/contacto")
 @Tag(name = "Contacto", description = "Botones de WhatsApp: registran el contacto y redirigen")
@@ -22,6 +23,19 @@ class ContactoController {
 
     ContactoController(ContactoService contactos) {
         this.contactos = contactos;
+    }
+
+    @GetMapping("/publicaciones/{slug}")
+    @Operation(summary = "Contacta al vendedor por una publicación",
+            description = "Registra el contacto (con el usuario si hay sesión) y redirige a WhatsApp con un mensaje "
+                    + "que incluye el auto, su precio y el link. Solo para publicaciones activas.")
+    @ApiResponse(responseCode = "302", description = "Redirección a wa.me")
+    @ApiResponse(responseCode = "404", description = "No existe o ya no está activa")
+    ResponseEntity<Void> contactarPorPublicacion(@PathVariable String slug, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(contactos.contactarPorPublicacion(slug, jwt))
+                .cacheControl(CacheControl.noStore())
+                .build();
     }
 
     @GetMapping("/vendedores/{slug}")

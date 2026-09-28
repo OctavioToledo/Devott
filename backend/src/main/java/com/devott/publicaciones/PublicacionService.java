@@ -169,6 +169,21 @@ public class PublicacionService {
         return Pagina.de(page, vistas(page.getContent()));
     }
 
+    /** Lo necesario para armar el mensaje de WhatsApp de una publicación. */
+    public record ParaContacto(UUID publicacionId, UUID vendedorId, String slug, String titulo, String version,
+                               int anio, BigDecimal precio, Moneda moneda) {
+    }
+
+    /** Publicación activa por la que se puede contactar al vendedor. Vendida, pausada o borrador: 404. */
+    public ParaContacto paraContacto(String slug) {
+        return publicaciones.findBySlug(slug)
+                .filter(p -> p.getEstado() == EstadoPublicacion.ACTIVA)
+                .map(p -> new ParaContacto(p.getId(), p.getVendedorId(), p.getSlug(),
+                        catalogo.modeloConMarca(p.getModeloId()).orElseThrow().titulo(), p.getVersion(), p.getAnio(),
+                        p.getPrecio(), p.getMoneda()))
+                .orElseThrow(() -> new RecursoNoEncontradoException("Esta publicación ya no está disponible."));
+    }
+
     /** Resultado del feed: la publicación y, si se buscó por zona, a cuántos km está. */
     public record Encontrada(PublicacionVista vista, Double distanciaKm) {
     }
