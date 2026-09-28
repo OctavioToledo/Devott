@@ -8,6 +8,8 @@ import { SelectorZona } from "@/components/feed/SelectorZona";
 import { clasesBoton } from "@/components/ui/boton";
 import { obtenerMarcas, obtenerModelos } from "@/lib/api/catalogo";
 import { ErrorApi } from "@/lib/api/cliente";
+import { usuarioActual } from "@/lib/auth/sesion";
+import { slugsGuardados } from "@/lib/interacciones/consultas";
 import type { Condicion, Marca, Modelo, Pagina, TarjetaPublicacion } from "@/lib/api/tipos";
 import {
   cantidadDeFiltros,
@@ -39,7 +41,11 @@ export async function generateMetadata({ searchParams }: PageProps<"/">): Promis
 
 export default async function Inicio({ searchParams }: PageProps<"/">) {
   const filtros = leerFiltros(await searchParams);
-  const { marcas, modelos } = await catalogo(filtros.marca);
+  const [{ marcas, modelos }, usuario, guardados] = await Promise.all([
+    catalogo(filtros.marca),
+    usuarioActual(),
+    slugsGuardados(),
+  ]);
 
   let resultado: Pagina<TarjetaPublicacion> | null = null;
   let error: string | null = null;
@@ -132,7 +138,14 @@ export default async function Inicio({ searchParams }: PageProps<"/">) {
                 {resultado.total > 1 && <SelectorOrden filtros={filtros} />}
               </div>
               {resultado.items.length > 0 ? (
-                <ListaFeed key={url} filtros={filtros} inicial={resultado} />
+                <ListaFeed
+                  key={url}
+                  filtros={filtros}
+                  inicial={resultado}
+                  guardados={guardados}
+                  logueado={usuario !== null}
+                  volverA={url}
+                />
               ) : (
                 <SinResultados filtros={filtros} />
               )}

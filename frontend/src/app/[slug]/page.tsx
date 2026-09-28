@@ -4,12 +4,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { clasesBoton } from "@/components/ui/boton";
 import { BotonCopiar } from "@/components/ui/BotonCopiar";
+import { BotonSeguir } from "@/components/interacciones/BotonSeguir";
+import { usuarioActual } from "@/lib/auth/sesion";
+import { slugsSeguidos } from "@/lib/interacciones/consultas";
 import { TarjetaStock } from "@/components/publicaciones/TarjetaStock";
 import { Logo } from "@/components/ui/Logo";
 import type { Condicion, VendedorPublico } from "@/lib/api/tipos";
 import { stockDeVendedor } from "@/lib/publicaciones/consultas";
 import { iniciales, urlDelPerfil, urlVisibleDelPerfil } from "@/lib/vendedores/formato";
-import { vendedorPublico } from "@/lib/vendedores/consultas";
+import { miVendedor, vendedorPublico } from "@/lib/vendedores/consultas";
 
 const FILTROS: { valor: string | null; texto: string; condicion?: Condicion }[] = [
   { valor: null, texto: "Todos" },
@@ -51,7 +54,12 @@ export default async function PerfilPublico({ params, searchParams }: PageProps<
   if (!vendedor) notFound();
 
   const filtro = FILTROS.find((f) => f.valor === condicion) ?? FILTROS[0];
-  const stock = await stockDeVendedor(vendedor.slug, filtro.condicion);
+  const usuario = await usuarioActual();
+  const [stock, seguidos, propio] = await Promise.all([
+    stockDeVendedor(vendedor.slug, filtro.condicion),
+    slugsSeguidos(),
+    usuario ? miVendedor().catch(() => null) : null,
+  ]);
 
   const esConcesionaria = vendedor.tipo === "CONCESIONARIA";
   const lugar = ubicacion(vendedor);
@@ -140,6 +148,15 @@ export default async function PerfilPublico({ params, searchParams }: PageProps<
           </a>
           <BotonCopiar texto={urlDelPerfil(vendedor.slug)} tamano="lg" className="flex-1 font-bold" />
         </div>
+        {propio?.slug !== vendedor.slug && (
+          <BotonSeguir
+            vendedorSlug={vendedor.slug}
+            siguiendo={seguidos.includes(vendedor.slug)}
+            logueado={usuario !== null}
+            volverA={`/${vendedor.slug}`}
+            tamano="lg"
+          />
+        )}
       </div>
 
       <section id="stock" aria-labelledby="titulo-stock" className="mx-auto flex w-full max-w-3xl flex-col gap-3.5 px-4 pt-7">

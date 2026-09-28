@@ -2,13 +2,17 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BotonGuardar } from "@/components/interacciones/BotonGuardar";
+import { BotonSeguir } from "@/components/interacciones/BotonSeguir";
 import { BotonVolver } from "@/components/publicaciones/BotonVolver";
 import { Galeria } from "@/components/publicaciones/Galeria";
 import { TarjetaStock } from "@/components/publicaciones/TarjetaStock";
 import { clasesBoton } from "@/components/ui/boton";
 import { Odometro } from "@/components/publicaciones/Odometro";
 import type { PublicacionPublica, VendedorPublico } from "@/lib/api/tipos";
+import { usuarioActual } from "@/lib/auth/sesion";
 import { urlDelSitio } from "@/lib/config";
+import { slugsGuardados, slugsSeguidos } from "@/lib/interacciones/consultas";
 import { publicacionPublica, stockDeVendedor } from "@/lib/publicaciones/consultas";
 import {
   CARROCERIAS,
@@ -19,7 +23,7 @@ import {
   TRACCIONES,
   TRANSMISIONES,
 } from "@/lib/publicaciones/etiquetas";
-import { vendedorPublico } from "@/lib/vendedores/consultas";
+import { miVendedor, vendedorPublico } from "@/lib/vendedores/consultas";
 import { iniciales } from "@/lib/vendedores/formato";
 
 function lugarDe(p: PublicacionPublica): string {
@@ -68,10 +72,21 @@ export default async function DetallePublicacion({ params, searchParams }: PageP
   const { contacto } = await searchParams;
   const p = await publicacionPublica(slug);
   if (!p) notFound();
-  const [vendedor, stock] = await Promise.all([
+  const usuario = await usuarioActual();
+  const [vendedor, stock, guardados, seguidos, propio] = await Promise.all([
     vendedorPublico(p.vendedor.slug),
     stockDeVendedor(p.vendedor.slug).catch(() => null),
+    slugsGuardados(),
+    slugsSeguidos(),
+    usuario ? miVendedor().catch(() => null) : null,
   ]);
+  const aca = `/publicaciones/${p.slug}`;
+  const sesion = {
+    logueado: usuario !== null,
+    volverA: aca,
+    siguiendo: seguidos.includes(p.vendedor.slug),
+    esPropio: propio?.slug === p.vendedor.slug,
+  };
   const otros = (stock?.items ?? []).filter((o) => o.slug !== p.slug).slice(0, 4);
 
   const lugar = lugarDe(p);
@@ -141,9 +156,18 @@ export default async function DetallePublicacion({ params, searchParams }: PageP
             {vendida && (
               <p className="self-start rounded-md bg-tinta px-2.5 py-1 text-xs font-bold tracking-[0.5px] text-fondo">VENDIDO</p>
             )}
-            <div>
-              <h1 className="font-titulo text-[28px] leading-[1.05] font-extrabold tracking-[-0.8px]">{p.titulo}</h1>
-              {p.version && <p className="mt-1 text-[15px] text-secundario">{p.version}</p>}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h1 className="font-titulo text-[28px] leading-[1.05] font-extrabold tracking-[-0.8px]">{p.titulo}</h1>
+                {p.version && <p className="mt-1 text-[15px] text-secundario">{p.version}</p>}
+              </div>
+              <BotonGuardar
+                slug={p.slug}
+                guardado={guardados.includes(p.slug)}
+                logueado={sesion.logueado}
+                volverA={aca}
+                variante="detalle"
+              />
             </div>
             <p className={`font-titulo text-[34px] leading-none font-extrabold tracking-[-1px] ${vendida ? "text-secundario line-through" : ""}`}>
               {formatoPrecio(p.precio, p.moneda)}
@@ -187,7 +211,7 @@ export default async function DetallePublicacion({ params, searchParams }: PageP
             )}
           </div>
 
-          <TarjetaVendedor p={p} vendedor={vendedor} />
+          <TarjetaVendedor p={p} vendedor={vendedor} sesion={sesion} />
         </aside>
       </div>
 
@@ -239,14 +263,13 @@ function BotonWhatsapp({ slug, className = "" }: { slug: string; className?: str
   );
 }
 
-function TarjetaVendedor({ p, vendedor }: { p: PublicacionPublica; vendedor: VendedorPublico | null }) {
+type Sesion = { logueado: boolean; volverA: string; siguiendo: boolean; esPropio: boolean };
+
+function TarjetaVendedor({ p, vendedor, sesion }: { p: PublicacionPublica; vendedor: VendedorPublico | null; sesion: Sesion }) {
   const v = p.vendedor;
   const lugar = [v.ciudad, v.provincia].filter(Boolean).join(", ");
   return (
-    <Link
-      href={`/${v.slug}`}
-      className="flex items-center gap-3.5 rounded-[22px] border border-borde bg-superficie p-4 no-underline hover:border-borde-fuerte"
-    >
+    <div className="relative flex items-center gap-3.5 rounded-[22px] border border-borde bg-superficie p-4 hover:border-borde-fuerte">
       {vendedor?.logoUrl ? (
         <span className="relative size-14 shrink-0 overflow-hidden rounded-2xl border border-borde bg-superficie">
           <Image src={vendedor.logoUrl} alt="" fill sizes="56px" className="object-contain" unoptimized />
@@ -257,7 +280,9 @@ function TarjetaVendedor({ p, vendedor }: { p: PublicacionPublica; vendedor: Ven
         </span>
       )}
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate font-bold">{v.nombrePublico}</span>
+        <Link href={`/${v.slug}`} className="truncate font-bold no-underline after:absolute after:inset-0 after:content-['']">
+          {v.nombrePublico}
+        </Link>
         <span className={`text-[13px] font-semibold ${v.verificado ? "text-confianza" : "text-secundario"}`}>
           {v.tipo === "CONCESIONARIA" ? "Concesionaria" : "Particular"}
           {v.verificado && " verificada"}
@@ -265,7 +290,16 @@ function TarjetaVendedor({ p, vendedor }: { p: PublicacionPublica; vendedor: Ven
         </span>
         <span className="mt-0.5 text-[13px] font-semibold text-marca">Ver todo su stock</span>
       </span>
-    </Link>
+      {!sesion.esPropio && (
+        <BotonSeguir
+          vendedorSlug={v.slug}
+          siguiendo={sesion.siguiendo}
+          logueado={sesion.logueado}
+          volverA={sesion.volverA}
+          className="shrink-0"
+        />
+      )}
+    </div>
   );
 }
 

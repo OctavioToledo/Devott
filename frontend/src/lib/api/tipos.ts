@@ -230,3 +230,15 @@ export type Pagina<T> = {
   total: number;
   hayMas: boolean;
 };
+
+/** Respuesta de GET /api/v1/me/seguimientos. */
+export type VendedorSeguido = {
+  slug: string;
+  nombrePublico: string;
+  tipo: TipoVendedor;
+  verificado: boolean;
+  logoUrl: string | null;
+  ciudad: string | null;
+  provincia: string | null;
+  autosActivos: number;
+};

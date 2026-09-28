@@ -11,7 +11,19 @@ import { TarjetaFeed } from "./TarjetaFeed";
  * Grilla del feed. La primera página viene renderizada del servidor; "Ver más" trae las siguientes
  * desde el navegador. Cuando cambian los filtros, la página se remonta con una `key` distinta.
  */
-export function ListaFeed({ filtros, inicial }: { filtros: FiltrosFeed; inicial: Pagina<TarjetaPublicacion> }) {
+export function ListaFeed({
+  filtros,
+  inicial,
+  guardados,
+  logueado,
+  volverA,
+}: {
+  filtros: FiltrosFeed;
+  inicial: Pagina<TarjetaPublicacion>;
+  guardados: string[];
+  logueado: boolean;
+  volverA: string;
+}) {
   const [items, setItems] = useState(inicial.items);
   const [pagina, setPagina] = useState(inicial.pagina);
   const [hayMas, setHayMas] = useState(inicial.hayMas);
@@ -39,7 +51,13 @@ export function ListaFeed({ filtros, inicial }: { filtros: FiltrosFeed; inicial:
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((p, i) => (
           <li key={p.slug}>
-            <TarjetaFeed publicacion={p} prioridad={i < 2} />
+            <TarjetaFeed
+              publicacion={p}
+              prioridad={i < 2}
+              guardado={guardados.includes(p.slug)}
+              logueado={logueado}
+              volverA={volverA}
+            />
           </li>
         ))}
       </ul>

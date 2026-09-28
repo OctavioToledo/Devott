@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BotonGuardar } from "@/components/interacciones/BotonGuardar";
 import { Odometro } from "@/components/publicaciones/Odometro";
 import { SiluetaAuto } from "@/components/publicaciones/SiluetaAuto";
 import type { TarjetaPublicacion } from "@/lib/api/tipos";
@@ -7,7 +8,19 @@ import { formatoDistancia } from "@/lib/publicaciones/busqueda";
 import { CONDICIONES, formatoPrecio } from "@/lib/publicaciones/etiquetas";
 
 /** Tarjeta del feed: foto, precio, año, odómetro y dónde está. Toda la tarjeta lleva al detalle. */
-export function TarjetaFeed({ publicacion: p, prioridad = false }: { publicacion: TarjetaPublicacion; prioridad?: boolean }) {
+export function TarjetaFeed({
+  publicacion: p,
+  prioridad = false,
+  guardado,
+  logueado,
+  volverA,
+}: {
+  publicacion: TarjetaPublicacion;
+  prioridad?: boolean;
+  guardado: boolean;
+  logueado: boolean;
+  volverA: string;
+}) {
   const lugar = [p.ciudad, p.provincia].filter(Boolean).join(", ");
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-[20px] border border-borde bg-superficie">
@@ -34,6 +47,9 @@ export function TarjetaFeed({ publicacion: p, prioridad = false }: { publicacion
               FINANCIA
             </span>
           )}
+        </div>
+        <div className="absolute top-1.5 right-1.5">
+          <BotonGuardar slug={p.slug} guardado={guardado} logueado={logueado} volverA={volverA} />
         </div>
         {p.cantidadFotos > 1 && (
           <span className="absolute right-2.5 bottom-2.5 rounded-md bg-tinta/80 px-2 py-1 text-[11px] font-semibold text-fondo">
