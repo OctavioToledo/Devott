@@ -1,6 +1,7 @@
 # Paso 11: deploy (plan)
 
-Estado: propuesto el 2026-09-28, pendiente de aprobación. Se implementa en la próxima sesión.
+Estado: aprobado el 2026-09-29, con la variante de bajo costo para el piloto (Supabase Free + EC2 t4g.micro +
+Vercel Hobby). En implementación.
 
 ## Objetivo
 
@@ -17,8 +18,9 @@ Navegador ──> devott.com (Vercel, Next.js) ──> api.devott.com (AWS sa-ea
 
 1. **Dominio**: decidir `devott.com` o `devott.com.ar` (NIC Argentina) y comprarlo. Lo ideal es manejar el DNS en
    Cloudflare o Route 53.
-2. **Supabase**: proyecto de producción en sa-east-1. Recomiendo el plan **Pro (USD 25/mes)**: el gratuito se
-   **pausa tras una semana sin actividad** y no tiene backups diarios.
+2. **Supabase**: proyecto de producción en sa-east-1 (hecho: `bjtiwwcdmfuzepcdgsvi`). Arranca en el plan **Free**:
+   se pausa tras una semana sin actividad y no tiene backups, así que hacemos un `pg_dump` diario propio. Pasar a
+   **Pro (USD 25/mes)** cuando haya concesionarias pagando.
 3. **Google Cloud Console**: credenciales OAuth para "Ingresar con Google", con las URLs de Supabase.
 4. **AWS**: cuenta con facturación y una alerta de presupuesto.
 5. **Vercel**: cuenta conectada al repo de GitHub.
@@ -39,13 +41,16 @@ Navegador ──> devott.com (Vercel, Next.js) ──> api.devott.com (AWS sa-ea
   ajustada al contenedor.
 - Configuración de producción por variables de entorno: `ALMACENAMIENTO=supabase`, `FRONTEND_URL` (CORS),
   `API_URL`, `DEVOTT_ADMINS`, datos de Supabase y de la base. Respetar `X-Forwarded-*` detrás del proxy.
-- Swagger UI: decidir si queda público en producción (propuesta: sí, el API es público igual; se puede cerrar luego).
+- Swagger UI queda público en producción (el API es público igual; se puede cerrar luego).
 - Los secretos van a AWS (Secrets Manager o Parameter Store), nunca al repo.
 
 ### 3. AWS en São Paulo
 Opción recomendada, simple y barata para el piloto:
-- **Una instancia EC2 chica (t4g.small, ARM)** con Docker, el contenedor de la API y **Caddy** delante para HTTPS
-  automático en `api.devott.com`. Unos USD 15/mes.
+- **Una instancia EC2 t4g.micro (ARM, 1 GB)** con Docker, el contenedor de la API y **Caddy** delante para HTTPS
+  automático en `api.devott.com`. JVM ajustada a la memoria y un poco de swap. Unos USD 6–10/mes con la IP pública;
+  los créditos de bienvenida de AWS cubren los primeros meses. Si queda corta, se sube a t4g.small sin cambiar nada.
+- **Backup diario** de la base de Supabase con `pg_dump` (cron en la misma instancia), guardado en S3 con
+  vencimiento automático.
 - Imagen en **ECR**; logs a CloudWatch; alerta de presupuesto.
 
 Alternativa más administrada (más cara, unos USD 40/mes o más): **ECS Fargate + Application Load Balancer + ACM**.
@@ -76,16 +81,16 @@ Lo que quedó "sin probar hasta conectar Supabase", ahora en producción:
 - Cotización del dólar y feed con filtros.
 
 ### 8. Antes del piloto (paso 12)
-- Backups: los diarios de Supabase Pro; probar una restauración.
+- Backups: probar una restauración del `pg_dump` diario.
 - Monitoreo mínimo: health check externo (por ejemplo UptimeRobot) sobre `/actuator/health`.
 - Páginas legales básicas (términos y privacidad), porque se guardan datos de usuarios.
 
 ## Costos aproximados por mes (piloto)
 | Servicio | Estimado |
 |---|---|
-| Supabase Pro | USD 25 |
-| AWS (EC2 t4g.small, disco, ECR, logs) | USD 15–20 |
-| Vercel Hobby (o Pro USD 20 si se usa comercialmente) | USD 0–20 |
+| Supabase Free (Pro USD 25 cuando haya ingresos) | USD 0 |
+| AWS (EC2 t4g.micro, IP pública, disco, ECR, S3, logs) | USD 6–10, cubierto al principio por créditos |
+| Vercel Hobby (Pro USD 20 cuando se use comercialmente) | USD 0 |
 | Dominio | USD 1–2 (prorrateado) |
 
 ## Commits previstos
