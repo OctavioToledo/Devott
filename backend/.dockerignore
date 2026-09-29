@@ -1,0 +1,7 @@
+target/
+almacenamiento-local/
+.env
+.env.*
+.idea/
+.vscode/
+*.iml

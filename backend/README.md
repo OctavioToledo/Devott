@@ -55,6 +55,18 @@ Todas las respuestas de error usan `application/problem+json` (RFC 9457), con `t
 
 Los tests de integración levantan Postgres + PostGIS con Testcontainers (imagen `postgis/postgis:17-3.5`), así que necesitan Docker corriendo. No usan la base de docker-compose.
 
+## Imagen Docker (producción)
+
+```bash
+docker build -t devott-api .
+docker run --rm --network host -e SERVER_PORT=8081 devott-api   # contra el Postgres local
+```
+
+- Build multi-stage (Maven + JRE 21) con las capas de Spring Boot separadas; corre sin root. No ejecuta los tests: los corre el CI antes.
+- No lee `.env` (queda fuera de la imagen): toda la configuración va por variables de entorno.
+- Pensada para una instancia de 1 GB: `JAVA_TOOL_OPTIONS` fija el heap al 65 % del límite del contenedor y usa el GC serial. Con 700 MB de límite queda en unos 400 MB de uso.
+- Detrás del proxy respeta `X-Forwarded-Proto`/`Host` si vienen de una IP interna (`server.forward-headers-strategy: native`), para que Swagger arme URLs `https://`.
+
 ## Documentación de la API
 
 Todos los endpoints bajo `/api/**` se documentan con OpenAPI (springdoc):

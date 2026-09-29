@@ -35,6 +35,9 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  # Detrás del proxy (Caddy) respeta X-Forwarded-Proto/Host, solo si vienen de una IP interna.
+  # Sin esto, Swagger arma URLs http:// en producción.
+  forward-headers-strategy: native
 
 devott:
   api:
